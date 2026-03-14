@@ -104,26 +104,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,25
 .notice{margin-top:10px;color:#a8bfdb;font-size:13px;line-height:1.5}
 @media(max-width:760px){.enum-row{grid-template-columns:1fr}}
 
-
-.toast-wrap{position:fixed;top:22px;right:22px;z-index:2000;display:grid;gap:10px;max-width:360px}
-.toast{padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(9,20,38,.94);color:#e8f2ff;box-shadow:0 20px 40px rgba(0,0,0,.35);font-size:14px;line-height:1.4;backdrop-filter:blur(12px);animation:toastIn .18s ease}
-.toast.ok{border-color:rgba(34,201,122,.25)}
-.toast.err{border-color:rgba(240,71,71,.28)}
-.toast.info{border-color:rgba(88,166,255,.24)}
-@keyframes toastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-
 @media(max-width:1180px){.hero{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.toolbar-grid{grid-template-columns:1fr 1fr}.editor-panel{order:-1}}
 @media(max-width:760px){.toolbar-grid,.form-grid,.modal-grid,.hero-kpis{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div id="toastWrap" class="toast-wrap"></div>
 <div class="container">
   <section class="hero">
     <div class="brand">
       <small>TALENTS4 • CRM ENTERPRISE WORKSPACE</small>
-      <h1>Talents4 CRM Workspace</h1>
-      <p>Operação, edição e leitura executiva com sincronização contínua.</p>
+      <h1>Talents4 Candidate Workspace</h1>
+      <p>Base operacional, edição completa e leitura executiva em um único ambiente.</p>
     </div>
     <div class="hero-kpis" id="heroMetrics"></div>
   </section>
@@ -244,7 +235,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,25
 <script>
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzYDJUdEEqSzQcTUDXoZmDXpbcpTT-e5bBju6nUEYPLM-vSTssfco3qL6WNP8AuDiMYMw/exec';
 const state = {
-  apiKey: localStorage.getItem('t4_api_key') || '41b391ee15b340f28e382f447ea565c04e21ae78',
+  apiKey: localStorage.getItem('t4_api_key') || '0de161deae65471c9c89ca5f89d54ff2a55410fe',
   schema: [],
   enums: {},
   candidates: [],
@@ -387,21 +378,6 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 8000){
   } finally {
     clearTimeout(timer);
   }
-}
-
-
-function notify(message, type = 'info', timeout = 3400){
-  const wrap = document.getElementById('toastWrap');
-  if(!wrap) return;
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = message;
-  wrap.appendChild(el);
-  window.setTimeout(() => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(-4px)';
-    window.setTimeout(() => el.remove(), 180);
-  }, timeout);
 }
 
 function ensureApiKey(){
@@ -551,8 +527,8 @@ async function loadAll(){
     await refreshList();
     setStatus('Conectado e carregado com sucesso.');
   }catch(err){
-    setStatus(`Erro: ${err.message}`); notify(err.message, 'err');
-    notify(err.message, 'err');
+    setStatus(`Erro: ${err.message}`);
+    alert(err.message);
   }
 }
 
@@ -612,8 +588,8 @@ function renderEnumManager(){
       state.schema = schemaData.schema || [];
       state.enums = schemaData.enums || {};
       hydrateFilters();
-      setStatus('Lista atualizada.'); notify('Lista atualizada.', 'ok');
-    }catch(err){ notify(err.message, 'err'); setStatus(`Erro: ${err.message}`); notify(err.message, 'err'); }
+      setStatus('Lista atualizada.');
+    }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); }
   });
 }
 async function saveEnumOption(){
@@ -628,8 +604,8 @@ async function saveEnumOption(){
     state.schema = schemaData.schema || [];
     state.enums = schemaData.enums || {};
     hydrateFilters();
-    setStatus('Nova opção disponível no editor.'); notify('Nova opção adicionada.', 'ok');
-  }catch(err){ notify(err.message, 'err'); setStatus(`Erro: ${err.message}`); notify(err.message, 'err'); }
+    setStatus('Nova opção disponível no editor.');
+  }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); }
 }
 
 async function openCandidate(id, fetchRemote = true){
@@ -644,7 +620,7 @@ async function openCandidate(id, fetchRemote = true){
     }
     renderCandidateList(state.candidates);
   }catch(err){
-    notify(err.message, 'err');
+    alert(err.message);
   }
 }
 
@@ -666,7 +642,7 @@ async function saveCurrent(){
     setStatus('Alterações salvas com sucesso.');
   }catch(err){
     setStatus(`Erro ao salvar: ${err.message}`);
-    notify(err.message, 'err');
+    alert(err.message);
   }
 }
 
@@ -683,7 +659,7 @@ async function toggleActive(){
     if(!isActive) await openCandidate(state.currentId);
     setStatus('Status operacional atualizado.');
   }catch(err){
-    notify(err.message, 'err');
+    alert(err.message);
   }
 }
 
@@ -710,7 +686,7 @@ async function createCandidate(){
     await openCandidate(created.id);
     setStatus(`Candidato ${created.id} criado com sucesso.`);
   }catch(err){
-    notify(err.message, 'err');
+    alert(err.message);
     setStatus(`Erro ao criar: ${err.message}`);
   }
 }
@@ -729,11 +705,11 @@ $('#loadBtn').onclick = async () => {
   }
   await loadAll();
   startAutoSync();
-  setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.'); notify('Base conectada com sucesso.', 'ok');
+  setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.');
 };
 $('#syncBtn').onclick = async () => {
-  try{ setStatus('Executando sincronização...'); await apiPost('sync', { actor:'web-editor' }); await loadAll(); setStatus('Sincronização concluída.'); notify('Sincronização concluída.', 'ok'); }
-  catch(err){ notify(err.message, 'err'); setStatus(`Erro no sync: ${err.message}`); }
+  try{ setStatus('Executando sincronização...'); await apiPost('sync', { actor:'web-editor' }); await loadAll(); setStatus('Sincronização concluída.'); }
+  catch(err){ alert(err.message); setStatus(`Erro no sync: ${err.message}`); }
 };
 $('#saveBtn').onclick = saveCurrent;
 $('#reloadCandidateBtn').onclick = () => state.currentId && openCandidate(state.currentId);
@@ -752,51 +728,67 @@ $('#statusFilter').addEventListener('change', () => refreshList().catch(err => a
 $('#visibilityFilter').addEventListener('change', () => refreshList().catch(err => alert(err.message)));
 
 
-async function autoBoot(){
-  const inputKey = ($('#apiKey')?.value || '').trim();
-  const savedKey = (localStorage.getItem('t4_api_key') || '41b391ee15b340f28e382f447ea565c04e21ae78').trim();
-  const resolvedKey = savedKey || inputKey || state.apiKey || '';
-  if(!resolvedKey){
-    setStatus('Informe a API key para iniciar.');
-    return;
-  }
-  state.apiKey = resolvedKey;
-  $('#apiKey').value = resolvedKey;
-  localStorage.setItem('t4_api_key', resolvedKey);
-  try{
+async 
+
+
+
+
+
+
+let bootStarted = false;
+
+async function safeBoot() {
+  if (bootStarted) return;
+  bootStarted = true;
+
+  try {
+    const input = document.querySelector('#apiKey');
+    const savedKey = (localStorage.getItem('t4_api_key') || '').trim();
+    const fieldKey = (input?.value || '').trim();
+    const resolvedKey = savedKey || fieldKey || state.apiKey || '';
+
+    if (!resolvedKey) {
+      setStatus('Informe a API key para iniciar.');
+      bootStarted = false;
+      return;
+    }
+
+    state.apiKey = resolvedKey;
+    if (input) input.value = resolvedKey;
+    localStorage.setItem('t4_api_key', resolvedKey);
+
     await loadAll();
-    startAutoSync();
-    setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.'); notify('Base conectada com sucesso.', 'ok');
-  }catch(err){
-    console.error('autoBoot', err);
-    setStatus(`Erro: ${err.message}`); notify(err.message, 'err');
+    if (typeof startAutoSync === 'function') startAutoSync();
+    setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.');
+    if (typeof notify === 'function') notify('Base conectada com sucesso.', 'ok');
+  } catch (err) {
+    console.error('safeBoot', err);
+    setStatus(`Erro: ${err.message}`);
+    if (typeof notify === 'function') notify(err.message, 'err');
+    bootStarted = false;
   }
 }
 
-document.addEventListener('visibilitychange', async () => {
-  if(!document.hidden && state.apiKey){
-    try{ await loadAll(); }catch(err){ console.error(err); }
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  requestAnimationFrame(() => {
+    safeBoot();
+  });
+
+  setTimeout(() => {
+    safeBoot();
+  }, 600);
 });
-window.addEventListener('focus', async () => {
-  if(state.apiKey){
-    try{ await loadAll(); }catch(err){ console.error(err); }
+
+window.addEventListener('focus', () => {
+  if (state.apiKey) loadAll().catch(console.error);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && state.apiKey) {
+    loadAll().catch(console.error);
   }
 });
 
-window.addEventListener('load', async () => {
-  if(state.apiKey) $('#apiKey').value = state.apiKey;
-});
 </script>
 </body>
 </html>
-
-document.addEventListener('DOMContentLoaded', async () => {
-  try{
-    if(!state.lastSyncAt){
-      await autoBoot();
-    }
-  }catch(err){
-    console.error(err);
-  }
-});
