@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Talents4 | CRM Enterprise v2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+<style>
+:root {
+  --bg: #060e1a; --bg2: #0a1628; --bg3: #0f1f38; --panel: rgba(10,22,40,0.9); --line: rgba(255,255,255,0.07); --line2: rgba(255,255,255,0.12);
+  --text: #e8f2ff; --muted: #7a96bc; --accent: #4fa3f7; --accent2: #7c5cff; --teal: #00d4aa; --good: #22c97a; --warn: #f59e0b; --bad: #f04747;
+  --shadow: 0 24px 64px rgba(0,0,0,0.5); --radius: 16px; --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+  --ger-black: #111111; --ger-red: #dd0000; --ger-gold: #ffcc00;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 40% at 10% 5%, rgba(79,163,247,0.10) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 35% at 90% 10%, rgba(124,92,255,0.09) 0%, transparent 55%),
+              radial-gradient(ellipse 40% 30% at 50% 90%, rgba(0,212,170,0.05) 0%, transparent 60%);
+}
+.container { position: relative; z-index: 1; width: min(1640px, 96vw); margin: 0 auto; padding: 28px 0 60px; }
+
+/* ── Hero ── */
+.hero { border: 1px solid var(--line2); border-radius: 22px; background: linear-gradient(135deg, rgba(10,22,40,0.97), rgba(8,16,30,0.93)); box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05); padding: 32px 36px 28px; margin-bottom: 20px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--ger-black) 0%, var(--ger-red) 50%, var(--ger-gold) 100%); z-index: 10; }
+.watermark { position: absolute; right: 20px; top: 20px; font-size: 80px; font-weight: 900; color: rgba(255,255,255,0.015); pointer-events: none; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1; z-index: 0; user-select: none; }
+
+/* ── Filter Panel ── */
+.filter-panel { background: rgba(0,0,0,0.25); border-radius: 14px; padding: 18px 20px; margin-top: 22px; border: 1px solid var(--line); position: relative; z-index: 2; }
+.filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.filter-header strong { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.filter-actions { display: flex; gap: 8px; }
+.top-controls { display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 12px; }
+.field { display: grid; gap: 5px; }
+.field-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding-left: 2px; }
+.control, .search { width: 100%; border-radius: 10px; border: 1px solid var(--line2); background: rgba(255,255,255,0.03); color: var(--text); padding: 10px 13px; font-size: 13px; font-family: var(--font); transition: border-color 0.2s, background 0.2s; }
+.control:focus, .search:focus { outline: none; border-color: var(--accent); background: rgba(79,163,247,0.06); }
+select.control option { background: var(--bg2); color: var(--text); }
+.btn { cursor: pointer; border-radius: 9px; border: 1px solid; font-family: var(--font); font-size: 12px; font-weight: 600; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; }
+.btn-ghost { background: transparent; border-color: var(--line2); color: var(--muted); }
+.btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.btn-export { background: rgba(34,201,122,0.08); color: var(--good); border-color: rgba(34,201,122,0.25); }
+.btn-export:hover { background: rgba(34,201,122,0.16); color: #fff; }
+.btn-refresh { background: rgba(79,163,247,0.08); color: var(--accent); border-color: rgba(79,163,247,0.25); }
+.btn-refresh:hover { background: rgba(79,163,247,0.16); color: #fff; }
+.btn-novo { background: rgba(124,92,255,0.15); color: #b3a1ff; border-color: rgba(124,92,255,0.4); }
+.btn-novo:hover { background: rgba(124,92,255,0.25); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,92,255,0.2); }
+
+/* ── UI Elements ── */
+.tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+.tab-btn { background: transparent; border: 1px solid transparent; color: var(--muted); font-family: var(--font); font-size: 14px; padding: 9px 16px; border-radius: 999px; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+.tab-btn.active { background: rgba(79,163,247,0.08); color: var(--text); font-weight: 600; border-color: rgba(79,163,247,0.2); }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeUp 0.35s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.kpi-value { margin-top: 8px; font-size: clamp(26px, 2.8vw, 38px); font-weight: 700; color: var(--text); line-height: 1; }
+.kpi-sub { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.grid-2 { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
+.panel-title h2 { font-size: 16px; font-weight: 600; color: var(--text); }
+.panel-title p { margin-top: 3px; font-size: 12px; color: var(--muted); }
+
+/* ── Table ── */
+.table-wrap { overflow: auto; border-radius: 12px; border: 1px solid var(--line); background: rgba(0,0,0,0.25); max-height: 540px; }
+table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+thead th { position: sticky; top: 0; z-index: 2; background: rgba(8,16,28,0.98); text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; padding: 14px 16px; border-bottom: 1px solid var(--line2); }
+tbody tr { cursor: pointer; transition: background 0.15s; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:hover { background: rgba(79,163,247,0.06); }
+tbody td { padding: 13px 16px; font-size: 13px; color: #b8cde8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.chip { display: inline-flex; padding: 4px 9px; border-radius: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.06); }
+.chip.good { background: rgba(34,201,122,0.12); color: #6debb0; border-color: rgba(34,201,122,0.25); }
+.chip.warn { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.25); }
+
+/* ── MODAL 360 & EDIT ── */
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(3,8,18,0.88); backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.active { display: flex; animation: overlayIn 0.25s ease; }
+@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-card { background: var(--bg2); width: 100%; max-width: 1160px; max-height: 92vh; border-radius: 22px; border: 1px solid rgba(79,163,247,0.15); box-shadow: 0 50px 120px rgba(0,0,0,0.7); display: flex; flex-direction: column; overflow: hidden; }
+.modal-header { padding: 26px 32px 20px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(8,18,34,0.98) 0%, rgba(10,22,40,0.95) 100%); flex-shrink: 0; position: relative; }
+.modal-name { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+.modal-actions { position: absolute; top: 22px; right: 26px; display: flex; gap: 10px; }
+.close-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--line2); color: var(--muted); width: 36px; height: 36px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.close-btn:hover { background: rgba(240,71,71,0.15); color: #fca5a5; }
+
+.modal-body { overflow-y: auto; flex: 1; padding: 28px 32px; }
+.field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.field-card { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.fc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 7px; }
+.fc-val { font-size: 14px; color: var(--text); line-height: 1.55; }
+
+/* Edit Inputs */
+.edit-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--line2); color: var(--text); border-radius: 6px; padding: 8px 10px; font-family: var(--font); font-size: 13px; outline: none; transition: 0.2s; }
+.edit-input:focus { border-color: var(--accent); background: rgba(79,163,247,0.05); }
+
+#loadingOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.08); border-left-color: var(--accent); animation: spin 0.9s linear infinite; margin-bottom: 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#errorToast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(34,201,122,0.92); color: #fff; padding: 14px 20px; border-radius: 11px; font-size: 13px; display: none; }
+</style>
+</head>
+<body>
+
+<div id="errorToast"></div>
+
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-size: 18px; font-weight: 600;">Conectando ao CRM Enterprise...</div>
+</div>
+
+<div class="container" style="display:none" id="mainContent">
+  <section class="hero">
+    <div class="watermark">DEUTSCHLAND</div>
+    <div style="position:relative;z-index:1;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;">TALENTS4 | DEUTSCHLAND PROJEKT</div>
+    <h1 style="position:relative;z-index:1;font-size:32px;font-weight:700;margin-bottom:6px">Plataforma de Inteligência e Decisão <span style="font-size:14px;color:var(--muted)">v2.0</span></h1>
+    <p style="position:relative;z-index:1;color:var(--muted);font-size:14px;">Conectado em tempo real com Google Sheets via API.</p>
+
+    <div class="filter-panel">
+      <div class="filter-header">
+        <strong>Motor de Busca Avançado</strong>
+        <div class="filter-actions">
+          <button class="btn btn-ghost" id="resetFilters">↺ Limpar</button>
+          <button class="btn btn-refresh" id="btnRefresh">Atualizar Dados</button>
+          <button class="btn btn-export" id="btnExport">Exportar</button>
+          <button class="btn btn-novo" onclick="openNewCandidate()">➕ Novo Candidato</button>
+        </div>
+      </div>
+      <div class="top-controls">
+        <div class="field"><label class="field-label">Busca Global</label><input id="searchInput" class="search" placeholder="Nome, ID..." /></div>
+        <div class="field"><label class="field-label">Status Pipeline</label><select id="pipelineFilter" class="control"></select></div>
+        <div class="field"><label class="field-label">Profissão</label><select id="professionFilter" class="control"></select></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-ops">📄 Base de Dados Central</button>
+  </div>
+
+  <div id="tab-ops" class="tab-content active">
+    <div class="kpis" id="kpiGrid"></div>
+    <section class="section card">
+      <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
+        <h2>Data Grid Consolidado</h2>
+        <span class="chip" id="tableCount">0 registros</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Profissional</th>
+              <th>Profissão</th>
+              <th>Etapa Atual</th>
+              <th>Substatus</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="modal-overlay" id="crmModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnToggleEdit" onclick="toggleEditMode()" style="background:rgba(255,255,255,0.1); color:#fff; border:none;">✏️ Editar</button>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-name" id="m-nome">Carregando...</div>
+      <div style="font-size:13px; color:var(--muted);" id="m-id-display">ID: —</div>
+    </div>
+    <div class="modal-body">
+      <div class="field-grid" id="modalFormGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  NOVA INTEGRAÇÃO API (APPS SCRIPT)
+// ══════════════════════════════════════════
+const API_URL = "https://script.google.com/macros/s/AKfycbwAPoxAyiGDacp46zcCoTCfrk0hhTUb3_WPMKD_I2lv5BImEQsQGXKYr6T8dnKd5Dn4/exec";
+
+let masterData = [];
+let filteredData = [];
+let dataHeaders = []; // Guarda as colunas exatas da sua planilha
+let currentCandidateId = null;
+let isEditMode = false;
+
+function showToast(msg, type="good") {
+  const t = document.getElementById('errorToast');
+  t.innerHTML = msg;
+  t.style.background = type === "good" ? "rgba(34,201,122,0.92)" : "rgba(240,71,71,0.92)";
+  t.style.display = 'block';
+  setTimeout(() => t.style.display='none', 4000);
+}
+
+// 1. LER DADOS DO GOOGLE SHEETS
+async function fetchCRMData() {
+  try {
+    const res = await fetch(API_URL);
+    const json = await res.json();
+    
+    if (json.length > 0) {
+      dataHeaders = Object.keys(json[0]); // Pega as colunas criadas por si
+    } else {
+      dataHeaders = ["ID", "Nome Completo", "E-mail", "Telefone", "Profissão", "ETAPA_ATUAL", "SUBSTATUS_ATUAL"];
+    }
+
+    masterData = json.map(row => {
+      row._id = row[dataHeaders[0]]; // Assume que a coluna 1 é sempre o ID
+      return row;
+    });
+
+    filteredData = [...masterData];
+    buildFilters();
+    renderAll();
+    
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loadingOverlay').innerHTML = `<div style="color:#f04747;font-size:18px;">❌ Erro ao conectar à API do Sheets.</div>`;
+  }
+}
+
+// 2. ENVIAR DADOS (CRIAR OU ATUALIZAR)
+async function saveToSheets(acao, payloadDados) {
+  const btn = document.getElementById('btnToggleEdit');
+  btn.innerText = "⏳ Salvando...";
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        acao: acao,
+        id: currentCandidateId,
+        dados: payloadDados
+      })
+    });
+    
+    showToast("Sucesso! Dados guardados no Google Sheets.");
+    isEditMode = false;
+    closeModal();
+    
+    // Recarrega os dados em background
+    document.getElementById('btnRefresh').innerText = "Atualizando...";
+    await fetchCRMData();
+    document.getElementById('btnRefresh').innerText = "Atualizar Dados";
+
+  } catch(e) {
+    showToast("Erro ao salvar. Verifique a conexão.", "bad");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════
+//  UI E RENDERIZAÇÃO
+// ══════════════════════════════════════════
+function renderAll() {
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="card"><div class="kpi-label">Total Cadastrados</div><div class="kpi-value">${filteredData.length}</div></div>
+  `;
+
+  document.getElementById('tableCount').textContent = `${filteredData.length} registros`;
+  
+  // Tenta encontrar colunas padrões para a tabela, se existirem
+  const findCol = (keywords) => dataHeaders.find(h => keywords.some(k => h.toLowerCase().includes(k))) || dataHeaders[1];
+
+  const colNome = findCol(['nome']);
+  const colProf = findCol(['prof']);
+  const colEtapa = findCol(['etapa', 'status pipe']);
+  const colSub = findCol(['substatus', 'resultado']);
+  const colEmail = findCol(['mail', 'e-mail']);
+  const colTel = findCol(['tel', 'cel']);
+
+  document.getElementById('tableBody').innerHTML = filteredData.map(c => `
+    <tr onclick="openModal('${c._id}')">
+      <td style="font-family:var(--mono);color:var(--muted)">${c._id}</td>
+      <td><strong style="color:#fff">${c[colNome] || '—'}</strong></td>
+      <td>${c[colProf] || '—'}</td>
+      <td><span class="chip warn">${c[colEtapa] || '—'}</span></td>
+      <td>${c[colSub] || '—'}</td>
+      <td>${c[colEmail] || '—'}</td>
+      <td>${c[colTel] || '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+//  MODAL: VISUALIZAR, EDITAR E NOVO
+// ══════════════════════════════════════════
+function openModal(id) {
+  currentCandidateId = id;
+  isEditMode = false;
+  const btn = document.getElementById('btnToggleEdit');
+  btn.innerHTML = "✏️ Editar";
+  btn.style.background = "rgba(255,255,255,0.1)";
+
+  const c = masterData.find(x => x._id == id);
+  if(!c) return;
+
+  // Busca o nome para o título
+  const colNome = dataHeaders.find(h => h.toLowerCase().includes('nome')) || dataHeaders[1];
+  document.getElementById('m-nome').textContent = c[colNome] || "Sem Nome";
+  document.getElementById('m-id-display').textContent = `ID do Sistema: ${c._id}`;
+
+  const grid = document.getElementById('modalFormGrid');
+  grid.innerHTML = '';
+
+  // Cria cards para TODAS as colunas que existem na aba Master (ignorando a coluna de ID)
+  dataHeaders.forEach(coluna => {
+    if(coluna === dataHeaders[0]) return; // Pula o ID
+    grid.innerHTML += `
+      <div class="field-card">
+        <div class="fc-label">${coluna}</div>
+        <div class="fc-val" data-col="${coluna}">${c[coluna] || ''}</div>
+      </div>
+    `;
+  });
+
+  document.getElementById('crmModal').classList.add('active');
+}
+
+function openNewCandidate() {
+  currentCandidateId = "NEW";
+  isEditMode = true; // Já abre em modo edição
+  
+  const btn = document.getElementById('btnToggleEdit');
+  btn.innerHTML = "💾 Criar Candidato";
+  btn.style.background = "rgba(34,201,122,0.2)";
+
+  document.getElementById('m-nome').textContent = "Novo Registro";
+  document.getElementById('m-id-display').textContent = "O ID será gerado automaticamente pelo Google Sheets.";
+
+  const grid = document.getElementById('modalFormGrid');
+  grid.innerHTML = '';
+
+  // Cria inputs vazios para TODAS as colunas
+  dataHeaders.forEach(coluna => {
+    if(coluna === dataHeaders[0]) return; // Pula o ID
+    grid.innerHTML += `
+      <div class="field-card" style="background: rgba(79,163,247,0.05); border-color: rgba(79,163,247,0.3);">
+        <div class="fc-label">${coluna}</div>
+        <div class="fc-val" data-col="${coluna}">
+          <input type="text" class="edit-input" placeholder="Digite aqui..." value="">
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('crmModal').classList.add('active');
+}
+
+function toggleEditMode() {
+  const btn = document.getElementById('btnToggleEdit');
+  const values = document.querySelectorAll('.fc-val');
+
+  if (!isEditMode) {
+    // Entrar em Modo Edição
+    isEditMode = true;
+    btn.innerHTML = "💾 Salvar Alterações";
+    btn.style.background = "rgba(34,201,122,0.2)";
+
+    values.forEach(div => {
+      const currentText = div.innerText;
+      div.innerHTML = `<input type="text" class="edit-input" value="${currentText.replace(/"/g, '&quot;')}">`;
+    });
+  } else {
+    // Salvar Dados
+    const payload = {};
+    values.forEach(div => {
+      const colunaName = div.getAttribute('data-col');
+      const input = div.querySelector('input');
+      if(input) {
+        payload[colunaName] = input.value;
+      }
+    });
+
+    if (currentCandidateId === "NEW") {
+      saveToSheets("criar", payload);
+    } else {
+      saveToSheets("atualizar", payload);
+    }
+  }
+}
+
+function closeModal() {
+  document.getElementById('crmModal').classList.remove('active');
+}
+
+// ══════════════════════════════════════════
+//  FILTROS BÁSICOS
+// ══════════════════════════════════════════
+function buildFilters() {
+  const colEtapa = dataHeaders.find(h => h.toLowerCase().includes('etapa'));
+  const colProf = dataHeaders.find(h => h.toLowerCase().includes('prof'));
+
+  const pop = (id, colName) => {
+    if(!colName) return;
+    const sel = document.getElementById(id);
+    const groups = [...new Set(masterData.map(c => c[colName]).filter(Boolean))];
+    sel.innerHTML = '<option value="">Todas as opções</option>' + groups.map(k => `<option value="${k}">${k}</option>`).join('');
+  };
+
+  pop('pipelineFilter', colEtapa);
+  pop('professionFilter', colProf);
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  filteredData = masterData.filter(c => Object.values(c).join(' ').toLowerCase().includes(q));
+  renderAll();
+});
+
+document.getElementById('btnRefresh').onclick = fetchCRMData;
+fetchCRMData(); // Inicia o sistema
+</script>
+</body>
+</html>
