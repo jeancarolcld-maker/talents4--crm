@@ -70,7 +70,6 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .notice{margin-top:10px;color:#a8bfdb;font-size:13px;line-height:1.5}
 .statusbar{margin-top:14px;font-size:13px;color:#a9c0de}
-
 .list-scroll{scrollbar-width:thin}
 select{color-scheme:dark;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%, #8fb3da 50%),linear-gradient(135deg,#8fb3da 50%, transparent 50%);background-position:calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px);background-size:6px 6px,6px 6px;background-repeat:no-repeat;padding-right:34px}
 input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,255,.45);box-shadow:0 0 0 3px rgba(88,166,255,.10)}
@@ -103,7 +102,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,25
 .chip.good,.chip.bad,.chip.warn,.chip.info{letter-spacing:0}
 .notice{margin-top:10px;color:#a8bfdb;font-size:13px;line-height:1.5}
 @media(max-width:760px){.enum-row{grid-template-columns:1fr}}
-
 @media(max-width:1180px){.hero{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.toolbar-grid{grid-template-columns:1fr 1fr}.editor-panel{order:-1}}
 @media(max-width:760px){.toolbar-grid,.form-grid,.modal-grid,.hero-kpis{grid-template-columns:1fr}}
 </style>
@@ -211,7 +209,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,25
   </div>
 </div>
 
-
 <div class="overlay" id="enumModal">
   <div class="modal-card">
     <div class="panel-head">
@@ -233,12 +230,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,25
 </div>
 
 <script>
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzYDJUdEEqSzQcTUDXoZmDXpbcpTT-e5bBju6nUEYPLM-vSTssfco3qL6WNP8AuDiMYMw/exec';
-const DEFAULT_API_KEY = '41b391ee15b340f28e382f447ea565c04e21ae78';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyHBwkQfS3MLHrZkIkaXrZP590y3ecUthSUAQWqBLs0L4qZLuq8MdzERTXThehmfXzyWg/exec';
+const DEFAULT_API_KEY = '24c4395e48f7477ba705b4dabf46b7d8e03e8422';
 const state = {
   apiKey: (localStorage.getItem('t4_api_key') || localStorage.getItem('talents4_api_key') || DEFAULT_API_KEY).trim(),
   schema: [],
-  enums: {},
+  enums: [],
   candidates: [],
   currentId: null,
   lastSyncAt: null,
@@ -246,24 +243,11 @@ const state = {
   autoSyncHandle: null
 };
 const sectionOrder = ['Master','Cadastro & Triagem','Entrevista Pessoal','Entrevista Avaliação','Análise RH','Documentação','Jurídico','Empregador'];
-
 const $ = sel => document.querySelector(sel);
 const statusbar = $('#statusbar');
-
-
-function prettyFieldLabel(label){
-  return String(label||'').replace(/\?/g,'').replace(/\s+/g,' ').trim();
-}
-function fieldTag(field){
-  const f = String(field||'').toLowerCase();
-  if(f.includes('status')) return 'lista';
-  if(f.includes('ativo') || f.includes('ocultar')) return 'controle';
-  if(f.includes('email') || f.includes('telefone')) return 'cadastro';
-  return '';
-}
-function closeAllCustomSelects(except){
-  document.querySelectorAll('.custom-select.open').forEach(el => { if(el !== except) el.classList.remove('open'); });
-}
+function prettyFieldLabel(label){ return String(label||'').replace(/\?/g,'').replace(/\s+/g,' ').trim(); }
+function fieldTag(field){ const f = String(field||'').toLowerCase(); if(f.includes('status')) return 'lista'; if(f.includes('ativo') || f.includes('ocultar')) return 'controle'; if(f.includes('email') || f.includes('telefone')) return 'cadastro'; return ''; }
+function closeAllCustomSelects(except){ document.querySelectorAll('.custom-select.open').forEach(el => { if(el !== except) el.classList.remove('open'); }); }
 function enhanceSelects(root = document){
   if(!root) return;
   root.querySelectorAll('select').forEach(select => {
@@ -311,404 +295,40 @@ function enhanceSelects(root = document){
   });
 }
 document.addEventListener('click', e => { if(!e.target.closest('.custom-select')) closeAllCustomSelects(); });
-
-
-
-function refreshAutoSyncBadge(){
-  const el = document.getElementById('autoSyncBadge');
-  if(!el) return;
-  el.textContent = `Auto-sync ativo • intervalo ${Math.round(state.autoSyncMs/1000)}s`;
-}
-
-function markSynced(){
-  state.lastSyncAt = new Date();
-  const el = document.getElementById('lastSyncBadge');
-  if(el) el.textContent = `Última atualização ${state.lastSyncAt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
-}
-async function fullReload(showStatus = true){
-  if(showStatus) setStatus('Sincronizando base...');
-  const schemaData = await apiGet('schema');
-  state.schema = schemaData.schema || [];
-  state.enums = schemaData.enums || {};
-  hydrateFilters();
-  await refreshList(false);
-  markSynced();
-  if(showStatus) setStatus('Base atualizada.');
-}
-function startAutoSync(){
-  if(state.autoSyncHandle) clearInterval(state.autoSyncHandle);
-  refreshAutoSyncBadge();
-  state.autoSyncHandle = setInterval(async () => {
-    if(document.hidden) return;
-    try{
-      await fullReload(false);
-    }catch(err){
-      console.error('AutoSync error', err);
-      setStatus(`Erro no sync: ${err.message}`);
-    }
-  }, state.autoSyncMs);
-}
-
+function refreshAutoSyncBadge(){ const el = document.getElementById('autoSyncBadge'); if(!el) return; el.textContent = `Auto-sync ativo • intervalo ${Math.round(state.autoSyncMs/1000)}s`; }
+function markSynced(){ state.lastSyncAt = new Date(); const el = document.getElementById('lastSyncBadge'); if(el) el.textContent = `Última atualização ${state.lastSyncAt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`; }
+async function fullReload(showStatus = true){ if(showStatus) setStatus('Sincronizando base...'); const schemaData = await apiGet('schema'); state.schema = schemaData.schema || []; state.enums = schemaData.enums || {}; hydrateFilters(); await refreshList(false); markSynced(); if(showStatus) setStatus('Base atualizada.'); }
+function startAutoSync(){ if(state.autoSyncHandle) clearInterval(state.autoSyncHandle); refreshAutoSyncBadge(); state.autoSyncHandle = setInterval(async () => { if(document.hidden) return; try{ await fullReload(false); }catch(err){ console.error('AutoSync error', err); setStatus(`Erro no sync: ${err.message}`); } }, state.autoSyncMs); }
 function setStatus(msg){ statusbar.textContent = msg; }
-
-function getChipClass(v){
-  const s = String(v||'').toLowerCase();
-  if(s.includes('aprov') || s==='true' || s.includes('forte') || s==='b1' || s==='b2' || s==='c1' || s==='c2') return 'good';
-  if(s.includes('reprov') || s.includes('inativo') || s==='false') return 'bad';
-  if(s.includes('pend') || s.includes('triagem') || s.includes('a0') || s.includes('a1') || s.includes('a2')) return 'warn';
-  return 'info';
-}
-
-
-async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 8000){
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try{
-    const res = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
-    const text = await res.text();
-    let data;
-    try{
-      data = JSON.parse(text);
-    }catch(_){
-      throw new Error('Resposta inválida da API.');
-    }
-    return data;
-  } catch(err){
-    if(err && err.name === 'AbortError') throw new Error('Tempo limite excedido ao conectar com a API.');
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function ensureApiKey(){
-  const key = $('#apiKey').value.trim();
-  if(!key) throw new Error('API key não informada.');
-  state.apiKey = key;
-  localStorage.setItem('t4_api_key', key);
-  return key;
-}
-
-async function apiGet(route, params = {}){
-  const search = new URLSearchParams({ route, key: ensureApiKey(), ...params, _ts: Date.now().toString() });
-  const data = await fetchJsonWithTimeout(`${WEBAPP_URL}?${search.toString()}`, {}, 8000);
-  if(!data.ok) throw new Error(data.error || 'Erro na API');
-  return data;
-}
-
-async function apiPost(action, body = {}){
-  const data = await fetchJsonWithTimeout(WEBAPP_URL, {
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({ action, key: ensureApiKey(), ...body })
-  }, 10000);
-  if(!data.ok) throw new Error(data.error || 'Erro na API');
-  return data;
-}
-
-function renderHero(metrics){
-  const cards = [
-    ['Base ativa', metrics.total, 'Registros visíveis no painel'],
-    ['Aprovados', metrics.aprovados, 'Com avanço confirmado ou alta aderência'],
-    ['B1+', metrics.b1Plus, 'Prontidão linguística operacional'],
-    ['Pendências críticas', metrics.pendentesDocs, 'Passaporte ou licença pendente']
-  ];
-  $('#heroMetrics').innerHTML = cards.map(([label,val,sub]) => `
-    <div class="metric">
-      <div class="label">${label}</div>
-      <div class="value">${val ?? 0}</div>
-      <div class="sub">${sub}</div>
-    </div>`).join('');
-}
-
-function buildSelectOptions(options, current = ''){
-  const arr = Array.isArray(options) ? options : [];
-  return `<option value=""></option>` + arr.map(opt => `<option value="${escapeHtml(opt)}" ${String(opt)===String(current)?'selected':''}>${escapeHtml(opt)}</option>`).join('');
-}
-
-function renderCandidateList(items){
-  $('#listCount').textContent = `${items.length} registros`;
-  const html = items.map(c => `
-    <div class="candidate ${state.currentId===c.id?'active':''}" data-id="${escapeHtml(c.id)}">
-      <div class="top">
-        <div>
-          <div class="name">${escapeHtml(c.nome || 'Sem nome')}</div>
-          <div style="margin-top:4px;color:#87a7c8;font-size:12px">${escapeHtml(c.id)}</div>
-        </div>
-        <div class="score">Score ${c.score || 0}</div>
-      </div>
-      <div class="meta">
-        <div>${escapeHtml(c['Profissão principal'] || 'Sem profissão')}</div>
-        <div>${escapeHtml(c['Cidade atual'] || 'Sem cidade')}</div>
-        <div>${escapeHtml(c.status || 'Sem status')}</div>
-      </div>
-    </div>`).join('');
-  $('#candidateList').innerHTML = html || `<div class="empty" style="min-height:240px">Nenhum candidato encontrado.</div>`;
-  document.querySelectorAll('.candidate').forEach(el => el.onclick = () => openCandidate(el.dataset.id));
-}
-
-function fieldInput(field, candidate){
-  const value = candidate?.[field.field] ?? candidate?.[field.label] ?? '';
-  const safeValue = escapeHtml(String(value ?? ''));
-  if(field.type === 'select' || (field.options && field.options.length)){
-    return `<select data-field="${escapeHtml(field.field)}">${buildSelectOptions(field.options || [], value)}</select>`;
-  }
-  if(field.type === 'boolean'){
-    const f = String(field.field||'').toLowerCase();
-    const trueLabel = f.includes('ocultar') ? 'Oculto' : (f.includes('ativo') ? 'Ativo' : 'Sim');
-    const falseLabel = f.includes('ocultar') ? 'Visível' : (f.includes('ativo') ? 'Inativo' : 'Não');
-    return `<select data-field="${escapeHtml(field.field)}">
-      <option value="TRUE" ${String(value).toUpperCase()==='TRUE'?'selected':''}>${trueLabel}</option>
-      <option value="FALSE" ${String(value).toUpperCase()==='FALSE'?'selected':''}>${falseLabel}</option>
-    </select>`;
-  }
-  if(field.field.toLowerCase().includes('resumo') || field.field.toLowerCase().includes('análise') || field.field.toLowerCase().includes('observa') || field.field.toLowerCase().includes('relato') || field.field.toLowerCase().includes('porque')){
-    return `<textarea data-field="${escapeHtml(field.field)}">${safeValue}</textarea>`;
-  }
-  return `<input data-field="${escapeHtml(field.field)}" value="${safeValue}" />`;
-}
-
-function renderEditor(candidate){
-  if(!candidate){ $('#editorWrap').style.display='none'; $('#editorEmpty').style.display='grid'; return; }
-  $('#editorWrap').style.display='block';
-  $('#editorEmpty').style.display='none';
-  $('#editorName').textContent = candidate.nome || candidate['Nome Completo'] || 'Sem nome';
-  $('#editorMeta').textContent = [candidate.id, candidate['Profissão principal'], candidate['Cidade atual']].filter(Boolean).join(' • ') || 'Sem metadados';
-  $('#editorScore').textContent = `Score ${candidate.score || 0}`;
-  $('#toggleActiveBtn').textContent = candidate.ativo === false ? 'Reativar' : 'Inativar';
-
-  const chips = [
-    ['Status', candidate.status],
-    ['Substatus', candidate.substatus],
-    ['Ativo', candidate.ativo === false ? 'Inativo' : 'Ativo'],
-    ['Dashboard', candidate.ocultarDashboard ? 'Oculto' : 'Visível'],
-    ['Alemão', candidate['Nível de alemão'] || candidate['Nível na língua alemã?'] || 'Não informado']
-  ].filter(x => x[1] !== undefined && x[1] !== '');
-  $('#editorChips').innerHTML = chips.map(([l,v])=>`<span class="chip ${getChipClass(v)}">${escapeHtml(l)}: ${escapeHtml(String(v))}</span>`).join('');
-
-  const bySection = {};
-  state.schema.forEach(f => {
-    if(!f.editable && f.field !== 'ID (Nº Inscrição)') return;
-    if(!bySection[f.section]) bySection[f.section] = [];
-    bySection[f.section].push(f);
-  });
-
-  $('#sectionsContainer').innerHTML = sectionOrder.filter(sec => bySection[sec]?.length).map(sec => `
-    <div class="section">
-      <div class="section-toolbar"><h3 class="section-title">${escapeHtml(sec)}</h3></div>
-      <div class="form-grid">
-        ${bySection[sec].map(f => `
-          <div class="${textareaField(f.field)?'full':''}">
-            <div class="field">
-              <label>${escapeHtml(prettyFieldLabel(f.label))}${fieldTag(f.field)?`<span class="field-tag">${escapeHtml(fieldTag(f.field))}</span>`:''}</label>
-              ${fieldInput(f, candidate)}
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`).join('');
-  enhanceSelects($('#sectionsContainer'));
-}
-
-function textareaField(name){
-  const s = String(name).toLowerCase();
-  return s.includes('resumo') || s.includes('análise') || s.includes('observa') || s.includes('relato') || s.includes('porque') || s.includes('histórico');
-}
-
-async function loadAll(){
-  try{
-    setStatus('Carregando schema, métricas e candidatos...');
-    const [schemaData, dashboardData] = await Promise.all([
-      apiGet('schema'),
-      apiGet('dashboard')
-    ]);
-    state.schema = schemaData.schema || [];
-    state.enums = schemaData.enums || {};
-    renderHero(dashboardData.metrics || {});
-    hydrateFilters();
-    await refreshList();
-    setStatus('Conectado e carregado com sucesso.');
-  }catch(err){
-    setStatus(`Erro: ${err.message}`);
-    alert(err.message);
-  }
-}
-
-async function refreshList(){
-  const visibility = $('#visibilityFilter').value;
-  const includeHidden = visibility !== 'ativos';
-  const q = $('#q').value.trim();
-  const data = await apiGet('candidates', { includeHidden, q, pageSize: 500 });
-  let items = data.items || [];
-  const status = $('#statusFilter').value;
-  if(status) items = items.filter(c => String(c.status||'') === status);
-  if(visibility === 'ocultos') items = items.filter(c => c.dashboardVisible === false);
-  renderCandidateList(items);
-  state.candidates = items;
-  if(state.currentId){
-    const current = items.find(i => i.id === state.currentId);
-    if(current) openCandidate(state.currentId, false);
-    else { state.currentId = null; renderEditor(null); }
-  }
-}
-
-function hydrateFilters(){
-  $('#apiKey').value = state.apiKey || '';
-  $('#newStatus').innerHTML = buildSelectOptions(state.enums['STATUS PIPELINE'] || [], 'Novo candidato');
-  $('#newSubstatus').innerHTML = buildSelectOptions(state.enums['Substatus'] || [], 'Sem contato');
-  const statusOptions = ['<option value="">Todos</option>'].concat((state.enums['STATUS PIPELINE'] || []).map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
-  $('#statusFilter').innerHTML = statusOptions.join('');
-  const enumFields = Object.keys(state.enums).sort();
-  $('#enumFieldSelect').innerHTML = enumFields.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
-  renderEnumManager();
-  enhanceSelects(document.querySelector('.toolbar'));
-  enhanceSelects(document.querySelector('#newModal'));
-  enhanceSelects(document.querySelector('#enumModal'));
-}
-
-
-async function addEnumOption(field, value){
-  return apiPost('upsertEnumOption', { field, value });
-}
-async function removeEnumOption(field, value){
-  return apiPost('removeEnumOption', { field, value });
-}
-function renderEnumManager(){
-  const field = $('#enumFieldSelect')?.value || Object.keys(state.enums)[0] || '';
-  const list = state.enums[field] || [];
-  $('#enumList').innerHTML = list.length
-    ? list.map(v => `<span class="enum-chip">${escapeHtml(v)} <button type="button" data-remove-enum="${escapeHtml(v)}">×</button></span>`).join('')
-    : '<div class="empty" style="min-height:120px">Nenhuma opção cadastrada.</div>';
-  document.querySelectorAll('[data-remove-enum]').forEach(btn => btn.onclick = async () => {
-    const value = btn.dataset.removeEnum;
-    const targetField = $('#enumFieldSelect').value;
-    if(!confirm(`Remover "${value}" de ${targetField}?`)) return;
-    try{
-      setStatus('Removendo opção da lista...');
-      await removeEnumOption(targetField, value);
-      const schemaData = await apiGet('schema');
-      state.schema = schemaData.schema || [];
-      state.enums = schemaData.enums || {};
-      hydrateFilters();
-      setStatus('Lista atualizada.');
-    }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); }
-  });
-}
-async function saveEnumOption(){
-  const field = $('#enumFieldSelect').value;
-  const value = $('#enumNewValue').value.trim();
-  if(!field || !value) return;
-  try{
-    setStatus('Adicionando opção à lista...');
-    await addEnumOption(field, value);
-    $('#enumNewValue').value = '';
-    const schemaData = await apiGet('schema');
-    state.schema = schemaData.schema || [];
-    state.enums = schemaData.enums || {};
-    hydrateFilters();
-    setStatus('Nova opção disponível no editor.');
-  }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); }
-}
-
-async function openCandidate(id, fetchRemote = true){
-  try{
-    state.currentId = id;
-    if(fetchRemote){
-      const data = await apiGet('candidate', { id });
-      renderEditor(data.candidate);
-    }else{
-      const local = state.candidates.find(c => c.id === id);
-      renderEditor(local || null);
-    }
-    renderCandidateList(state.candidates);
-  }catch(err){
-    alert(err.message);
-  }
-}
-
-function collectFormData(){
-  const wrap = $('#sectionsContainer');
-  const inputs = wrap.querySelectorAll('[data-field]');
-  const fields = {};
-  inputs.forEach(el => { fields[el.dataset.field] = el.value; });
-  return fields;
-}
-
-async function saveCurrent(){
-  if(!state.currentId) return;
-  try{
-    setStatus('Salvando alterações...');
-    await apiPost('updateCandidate', { id: state.currentId, fields: collectFormData(), actor: 'web-editor' });
-    await loadAll();
-    await openCandidate(state.currentId);
-    setStatus('Alterações salvas com sucesso.');
-  }catch(err){
-    setStatus(`Erro ao salvar: ${err.message}`);
-    alert(err.message);
-  }
-}
-
-async function toggleActive(){
-  if(!state.currentId) return;
-  const candidate = await apiGet('candidate', { id: state.currentId });
-  const isActive = candidate.candidate.ativo !== false;
-  const confirmText = isActive ? 'Inativar este candidato e ocultá-lo do dashboard?' : 'Reativar este candidato no dashboard?';
-  if(!confirm(confirmText)) return;
-  try{
-    setStatus(isActive ? 'Inativando candidato...' : 'Reativando candidato...');
-    await apiPost('setActive', { id: state.currentId, active: !isActive, actor: 'web-editor', statusFallback: 'Triagem' });
-    await loadAll();
-    if(!isActive) await openCandidate(state.currentId);
-    setStatus('Status operacional atualizado.');
-  }catch(err){
-    alert(err.message);
-  }
-}
-
-async function createCandidate(){
-  try{
-    const nome = $('#newNome').value.trim();
-    if(!nome) throw new Error('Nome é obrigatório.');
-    setStatus('Criando candidato...');
-    const payload = {
-      nome,
-      status: $('#newStatus').value || 'Novo candidato',
-      substatus: $('#newSubstatus').value || 'Sem contato',
-      actor: 'web-editor',
-      fields: {
-        'Profissão principal': $('#newProfissao').value.trim(),
-        'E-mail': $('#newEmail').value.trim(),
-        'Telefone': $('#newTelefone').value.trim(),
-        'Resumo profissional': $('#newResumo').value.trim()
-      }
-    };
-    const created = await apiPost('createCandidate', payload);
-    closeNewModal();
-    await loadAll();
-    await openCandidate(created.id);
-    setStatus(`Candidato ${created.id} criado com sucesso.`);
-  }catch(err){
-    alert(err.message);
-    setStatus(`Erro ao criar: ${err.message}`);
-  }
-}
-
-function escapeHtml(v){
-  return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+function getChipClass(v){ const s = String(v||'').toLowerCase(); if(s.includes('aprov') || s==='true' || s.includes('forte') || s==='b1' || s==='b2' || s==='c1' || s==='c2') return 'good'; if(s.includes('reprov') || s.includes('inativo') || s==='false') return 'bad'; if(s.includes('pend') || s.includes('triagem') || s.includes('a0') || s.includes('a1') || s.includes('a2')) return 'warn'; return 'info'; }
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 8000){ const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), timeoutMs); try{ const res = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' }); const text = await res.text(); let data; try{ data = JSON.parse(text); }catch(_){ throw new Error('Resposta inválida da API.'); } return data; } catch(err){ if(err && err.name === 'AbortError') throw new Error('Tempo limite excedido ao conectar com a API.'); throw err; } finally { clearTimeout(timer); } }
+function ensureApiKey(){ const key = $('#apiKey').value.trim(); if(!key) throw new Error('API key não informada.'); state.apiKey = key; localStorage.setItem('t4_api_key', key); return key; }
+async function apiGet(route, params = {}){ const search = new URLSearchParams({ route, key: ensureApiKey(), ...params, _ts: Date.now().toString() }); const data = await fetchJsonWithTimeout(`${WEBAPP_URL}?${search.toString()}`, {}, 8000); if(!data.ok) throw new Error(data.error || 'Erro na API'); return data; }
+async function apiPost(action, body = {}){ const data = await fetchJsonWithTimeout(WEBAPP_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action, key: ensureApiKey(), ...body }) }, 10000); if(!data.ok) throw new Error(data.error || 'Erro na API'); return data; }
+function renderHero(metrics){ const cards = [['Base ativa', metrics.total, 'Registros visíveis no painel'], ['Aprovados', metrics.aprovados, 'Com avanço confirmado ou alta aderência'], ['B1+', metrics.b1Plus, 'Prontidão linguística operacional'], ['Pendências críticas', metrics.pendentesDocs, 'Bloqueios documentais relevantes']]; $('#heroMetrics').innerHTML = cards.map(([label,val,sub]) => `<div class="metric"><div class="label">${label}</div><div class="value">${val ?? 0}</div><div class="sub">${sub}</div></div>`).join(''); }
+function buildSelectOptions(options, current = ''){ const arr = Array.isArray(options) ? options : []; return `<option value=""></option>` + arr.map(opt => `<option value="${escapeHtml(opt)}" ${String(opt)===String(current)?'selected':''}>${escapeHtml(opt)}</option>`).join(''); }
+function renderCandidateList(items){ $('#listCount').textContent = `${items.length} registros`; const html = items.map(c => `<div class="candidate ${state.currentId===c.id?'active':''}" data-id="${escapeHtml(c.id)}"><div class="top"><div><div class="name">${escapeHtml(c.nome || c['Nome completo'] || 'Sem nome')}</div><div style="margin-top:4px;color:#87a7c8;font-size:12px">${escapeHtml(c.id)}</div></div><div class="score">Score ${c.score || 0}</div></div><div class="meta"><div>${escapeHtml(c['Profissão principal'] || 'Sem profissão')}</div><div>${escapeHtml(c['Cidade atual'] || 'Sem cidade')}</div><div>${escapeHtml(c.status || 'Sem status')}</div></div></div>`).join(''); $('#candidateList').innerHTML = html || `<div class="empty" style="min-height:240px">Nenhum candidato encontrado.</div>`; document.querySelectorAll('.candidate').forEach(el => el.onclick = () => openCandidate(el.dataset.id)); }
+function fieldInput(field, candidate){ const value = candidate?.[field.field] ?? candidate?.[field.label] ?? ''; const safeValue = escapeHtml(String(value ?? '')); if(field.type === 'select' || (field.options && field.options.length)){ return `<select data-field="${escapeHtml(field.field)}">${buildSelectOptions(field.options || [], value)}</select>`; } if(field.type === 'boolean'){ const f = String(field.field||'').toLowerCase(); const trueLabel = f.includes('ocultar') ? 'Oculto' : (f.includes('ativo') ? 'Ativo' : 'Sim'); const falseLabel = f.includes('ocultar') ? 'Visível' : (f.includes('ativo') ? 'Inativo' : 'Não'); return `<select data-field="${escapeHtml(field.field)}"><option value="TRUE" ${String(value).toUpperCase()==='TRUE'?'selected':''}>${trueLabel}</option><option value="FALSE" ${String(value).toUpperCase()==='FALSE'?'selected':''}>${falseLabel}</option></select>`; } if(field.field.toLowerCase().includes('resumo') || field.field.toLowerCase().includes('análise') || field.field.toLowerCase().includes('observa') || field.field.toLowerCase().includes('relato') || field.field.toLowerCase().includes('porque')){ return `<textarea data-field="${escapeHtml(field.field)}">${safeValue}</textarea>`; } return `<input data-field="${escapeHtml(field.field)}" value="${safeValue}" />`; }
+function renderEditor(candidate){ if(!candidate){ $('#editorWrap').style.display='none'; $('#editorEmpty').style.display='grid'; return; } $('#editorWrap').style.display='block'; $('#editorEmpty').style.display='none'; $('#editorName').textContent = candidate.nome || candidate['Nome completo'] || candidate['Nome Completo'] || 'Sem nome'; $('#editorMeta').textContent = [candidate.id, candidate['Profissão principal'], candidate['Cidade atual']].filter(Boolean).join(' • ') || 'Sem metadados'; $('#editorScore').textContent = `Score ${candidate.score || 0}`; $('#toggleActiveBtn').textContent = candidate.ativo === false ? 'Reativar' : 'Inativar'; const chips = [['Status', candidate.status], ['Substatus', candidate.substatus], ['Ativo', candidate.ativo === false ? 'Inativo' : 'Ativo'], ['Dashboard', candidate.ocultarDashboard ? 'Oculto' : 'Visível'], ['Alemão', candidate['Nível de alemão'] || candidate['Nível na língua alemã?'] || 'Não informado']].filter(x => x[1] !== undefined && x[1] !== ''); $('#editorChips').innerHTML = chips.map(([l,v])=>`<span class="chip ${getChipClass(v)}">${escapeHtml(l)}: ${escapeHtml(String(v))}</span>`).join(''); const bySection = {}; state.schema.forEach(f => { if(!f.editable && f.field !== 'ID') return; if(!bySection[f.section]) bySection[f.section] = []; bySection[f.section].push(f); }); $('#sectionsContainer').innerHTML = sectionOrder.filter(sec => bySection[sec]?.length).map(sec => `<div class="section"><div class="section-toolbar"><h3 class="section-title">${escapeHtml(sec)}</h3></div><div class="form-grid">${bySection[sec].map(f => `<div class="${textareaField(f.field)?'full':''}"><div class="field"><label>${escapeHtml(prettyFieldLabel(f.label))}${fieldTag(f.field)?`<span class="field-tag">${escapeHtml(fieldTag(f.field))}</span>`:''}</label>${fieldInput(f, candidate)}</div></div>`).join('')}</div></div>`).join(''); enhanceSelects($('#sectionsContainer')); }
+function textareaField(name){ const s = String(name).toLowerCase(); return s.includes('resumo') || s.includes('análise') || s.includes('observa') || s.includes('relato') || s.includes('porque') || s.includes('histórico'); }
+async function loadAll(){ try{ setStatus('Carregando schema, métricas e candidatos...'); const [schemaData, dashboardData] = await Promise.all([apiGet('schema'), apiGet('dashboard')]); state.schema = schemaData.schema || []; state.enums = schemaData.enums || {}; renderHero(dashboardData.metrics || {}); hydrateFilters(); await refreshList(); setStatus('Conectado e carregado com sucesso.'); }catch(err){ setStatus(`Erro: ${err.message}`); alert(err.message); } }
+async function refreshList(){ const visibility = $('#visibilityFilter').value; const includeHidden = visibility !== 'ativos'; const q = $('#q').value.trim(); const data = await apiGet('candidates', { includeHidden, q, pageSize: 500 }); let items = data.items || []; const status = $('#statusFilter').value; if(status) items = items.filter(c => String(c.status||'') === status); if(visibility === 'ocultos') items = items.filter(c => c.dashboardVisible === false); renderCandidateList(items); state.candidates = items; if(state.currentId){ const current = items.find(i => i.id === state.currentId); if(current) openCandidate(state.currentId, false); else { state.currentId = null; renderEditor(null); } } }
+function hydrateFilters(){ $('#apiKey').value = state.apiKey || ''; $('#newStatus').innerHTML = buildSelectOptions(state.enums['STATUS PIPELINE'] || [], 'Triagem'); $('#newSubstatus').innerHTML = buildSelectOptions(state.enums['Substatus'] || [], 'Novo'); const statusOptions = ['<option value="">Todos</option>'].concat((state.enums['STATUS PIPELINE'] || []).map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)); $('#statusFilter').innerHTML = statusOptions.join(''); const enumFields = Object.keys(state.enums).sort(); $('#enumFieldSelect').innerHTML = enumFields.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join(''); renderEnumManager(); enhanceSelects(document.querySelector('.toolbar')); enhanceSelects(document.querySelector('#newModal')); enhanceSelects(document.querySelector('#enumModal')); }
+async function addEnumOption(field, value){ return apiPost('upsertEnumOption', { field, value }); }
+async function removeEnumOption(field, value){ return apiPost('removeEnumOption', { field, value }); }
+function renderEnumManager(){ const field = $('#enumFieldSelect')?.value || Object.keys(state.enums)[0] || ''; const list = state.enums[field] || []; $('#enumList').innerHTML = list.length ? list.map(v => `<span class="enum-chip">${escapeHtml(v)} <button type="button" data-remove-enum="${escapeHtml(v)}">×</button></span>`).join('') : '<div class="empty" style="min-height:120px">Nenhuma opção cadastrada.</div>'; document.querySelectorAll('[data-remove-enum]').forEach(btn => btn.onclick = async () => { const value = btn.dataset.removeEnum; const targetField = $('#enumFieldSelect').value; if(!confirm(`Remover "${value}" de ${targetField}?`)) return; try{ setStatus('Removendo opção da lista...'); await removeEnumOption(targetField, value); const schemaData = await apiGet('schema'); state.schema = schemaData.schema || []; state.enums = schemaData.enums || {}; hydrateFilters(); setStatus('Lista atualizada.'); }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); } }); }
+async function saveEnumOption(){ const field = $('#enumFieldSelect').value; const value = $('#enumNewValue').value.trim(); if(!field || !value) return; try{ setStatus('Adicionando opção à lista...'); await addEnumOption(field, value); $('#enumNewValue').value = ''; const schemaData = await apiGet('schema'); state.schema = schemaData.schema || []; state.enums = schemaData.enums || {}; hydrateFilters(); setStatus('Nova opção disponível no editor.'); }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); } }
+async function openCandidate(id, fetchRemote = true){ try{ state.currentId = id; if(fetchRemote){ const data = await apiGet('candidate', { id }); renderEditor(data.candidate); }else{ const local = state.candidates.find(c => c.id === id); renderEditor(local || null); } renderCandidateList(state.candidates); }catch(err){ alert(err.message); } }
+function collectFormData(){ const wrap = $('#sectionsContainer'); const inputs = wrap.querySelectorAll('[data-field]'); const fields = {}; inputs.forEach(el => { fields[el.dataset.field] = el.value; }); return fields; }
+async function saveCurrent(){ if(!state.currentId) return; try{ setStatus('Salvando alterações...'); await apiPost('updateCandidate', { id: state.currentId, fields: collectFormData(), actor: 'web-editor' }); await loadAll(); await openCandidate(state.currentId); setStatus('Alterações salvas com sucesso.'); }catch(err){ setStatus(`Erro ao salvar: ${err.message}`); alert(err.message); } }
+async function toggleActive(){ if(!state.currentId) return; const candidate = await apiGet('candidate', { id: state.currentId }); const isActive = candidate.candidate.ativo !== false; const confirmText = isActive ? 'Inativar este candidato e ocultá-lo do dashboard?' : 'Reativar este candidato no dashboard?'; if(!confirm(confirmText)) return; try{ setStatus(isActive ? 'Inativando candidato...' : 'Reativando candidato...'); await apiPost('setActive', { id: state.currentId, active: !isActive, actor: 'web-editor', statusFallback: 'Triagem', currentStage: candidate.candidate.status || '' }); await loadAll(); if(!isActive) await openCandidate(state.currentId); setStatus('Status operacional atualizado.'); }catch(err){ alert(err.message); } }
+async function createCandidate(){ try{ const nome = $('#newNome').value.trim(); if(!nome) throw new Error('Nome é obrigatório.'); setStatus('Criando candidato...'); const payload = { nome, status: $('#newStatus').value || 'Triagem', substatus: $('#newSubstatus').value || 'Novo', actor: 'web-editor', fields: { 'Profissão principal': $('#newProfissao').value.trim(), 'E-mail': $('#newEmail').value.trim(), 'Telefone': $('#newTelefone').value.trim(), 'Resumo profissional': $('#newResumo').value.trim() } }; const created = await apiPost('createCandidate', payload); closeNewModal(); await loadAll(); await openCandidate(created.id); setStatus(`Candidato ${created.id} criado com sucesso.`); }catch(err){ alert(err.message); setStatus(`Erro ao criar: ${err.message}`); } }
+function escapeHtml(v){ return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function closeNewModal(){ $('#newModal').classList.remove('show'); }
 document.getElementById('newModal').addEventListener('click', e => { if(e.target.id==='newModal') closeNewModal(); });
 document.getElementById('enumModal').addEventListener('click', e => { if(e.target.id==='enumModal') document.getElementById('enumModal').classList.remove('show'); });
-
-$('#loadBtn').onclick = async () => {
-  if($('#apiKey').value.trim()) persistApiKey($('#apiKey').value.trim());
-  await loadAll();
-  startAutoSync();
-  setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.');
-};
-$('#syncBtn').onclick = async () => {
-  try{ setStatus('Executando sincronização...'); await apiPost('sync', { actor:'web-editor' }); await loadAll(); setStatus('Sincronização concluída.'); }
-  catch(err){ alert(err.message); setStatus(`Erro no sync: ${err.message}`); }
-};
+$('#loadBtn').onclick = async () => { if($('#apiKey').value.trim()) persistApiKey($('#apiKey').value.trim()); await loadAll(); startAutoSync(); setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.'); };
+$('#syncBtn').onclick = async () => { try{ setStatus('Executando sincronização...'); await apiPost('sync', { actor:'web-editor' }); await loadAll(); setStatus('Sincronização concluída.'); } catch(err){ alert(err.message); setStatus(`Erro no sync: ${err.message}`); } };
 $('#saveBtn').onclick = saveCurrent;
 $('#reloadCandidateBtn').onclick = () => state.currentId && openCandidate(state.currentId);
 $('#toggleActiveBtn').onclick = toggleActive;
@@ -724,71 +344,12 @@ $('#enumFieldSelect').addEventListener('change', renderEnumManager);
 $('#q').addEventListener('input', () => refreshList().catch(err => alert(err.message)));
 $('#statusFilter').addEventListener('change', () => refreshList().catch(err => alert(err.message)));
 $('#visibilityFilter').addEventListener('change', () => refreshList().catch(err => alert(err.message)));
-
-
 let bootStarted = false;
-
-function persistApiKey(key){
-  const normalized = String(key || '').trim();
-  if (!normalized) return '';
-  state.apiKey = normalized;
-  localStorage.setItem('t4_api_key', normalized);
-  localStorage.setItem('talents4_api_key', normalized);
-  const input = document.querySelector('#apiKey');
-  if (input) input.value = normalized;
-  return normalized;
-}
-
-async function safeBoot() {
-  if (bootStarted) return;
-  bootStarted = true;
-
-  try {
-    const input = document.querySelector('#apiKey');
-    const savedKey = (localStorage.getItem('t4_api_key') || localStorage.getItem('talents4_api_key') || '').trim();
-    const fieldKey = (input?.value || '').trim();
-    const resolvedKey = persistApiKey(savedKey || fieldKey || state.apiKey || DEFAULT_API_KEY || '');
-
-    if (!resolvedKey) {
-      setStatus('Informe a API key para iniciar.');
-      bootStarted = false;
-      return;
-    }
-
-    await loadAll();
-    if (typeof startAutoSync === 'function') startAutoSync();
-    setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.');
-    if (typeof notify === 'function') notify('Base conectada com sucesso.', 'ok');
-  } catch (err) {
-    console.error('safeBoot', err);
-    setStatus(`Erro: ${err.message}`);
-    if (typeof notify === 'function') notify(err.message, 'err');
-    bootStarted = false;
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  persistApiKey(state.apiKey || DEFAULT_API_KEY);
-
-  requestAnimationFrame(() => {
-    safeBoot();
-  });
-
-  setTimeout(() => {
-    safeBoot();
-  }, 600);
-});
-
-window.addEventListener('focus', () => {
-  if (state.apiKey) loadAll().catch(console.error);
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && state.apiKey) {
-    loadAll().catch(console.error);
-  }
-});
-
+function persistApiKey(key){ const normalized = String(key || '').trim(); if (!normalized) return ''; state.apiKey = normalized; localStorage.setItem('t4_api_key', normalized); localStorage.setItem('talents4_api_key', normalized); const input = document.querySelector('#apiKey'); if (input) input.value = normalized; return normalized; }
+async function safeBoot() { if (bootStarted) return; bootStarted = true; try { const input = document.querySelector('#apiKey'); const savedKey = (localStorage.getItem('t4_api_key') || localStorage.getItem('talents4_api_key') || '').trim(); const fieldKey = (input?.value || '').trim(); const resolvedKey = persistApiKey(savedKey || fieldKey || state.apiKey || DEFAULT_API_KEY || ''); if (!resolvedKey) { setStatus('Informe a API key para iniciar.'); bootStarted = false; return; } await loadAll(); if (typeof startAutoSync === 'function') startAutoSync(); setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.'); } catch (err) { console.error('safeBoot', err); setStatus(`Erro: ${err.message}`); bootStarted = false; } }
+document.addEventListener('DOMContentLoaded', () => { persistApiKey(state.apiKey || DEFAULT_API_KEY); requestAnimationFrame(() => { safeBoot(); }); setTimeout(() => { safeBoot(); }, 600); });
+window.addEventListener('focus', () => { if (state.apiKey) loadAll().catch(console.error); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && state.apiKey) { loadAll().catch(console.error); } });
 </script>
 </body>
 </html>
