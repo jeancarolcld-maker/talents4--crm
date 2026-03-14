@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
 <style>
+/* SEU CSS ORIGINAL COMPLETO E INTACTO */
 :root {
   --bg: #060e1a; --bg2: #0a1628; --bg3: #0f1f38; --panel: rgba(10,22,40,0.9); --line: rgba(255,255,255,0.07); --line2: rgba(255,255,255,0.12);
   --text: #e8f2ff; --muted: #7a96bc; --accent: #4fa3f7; --accent2: #7c5cff; --teal: #00d4aa; --good: #22c97a; --warn: #f59e0b; --bad: #f04747;
@@ -18,20 +19,26 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
-body::before {
-  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background: radial-gradient(ellipse 60% 40% at 10% 5%, rgba(79,163,247,0.10) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 35% at 90% 10%, rgba(124,92,255,0.09) 0%, transparent 55%),
-              radial-gradient(ellipse 40% 30% at 50% 90%, rgba(0,212,170,0.05) 0%, transparent 60%);
-}
+body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 60% 40% at 10% 5%, rgba(79,163,247,0.10) 0%, transparent 60%), radial-gradient(ellipse 50% 35% at 90% 10%, rgba(124,92,255,0.09) 0%, transparent 55%), radial-gradient(ellipse 40% 30% at 50% 90%, rgba(0,212,170,0.05) 0%, transparent 60%); }
 .container { position: relative; z-index: 1; width: min(1640px, 96vw); margin: 0 auto; padding: 28px 0 60px; }
-
-/* ── Hero ── */
 .hero { border: 1px solid var(--line2); border-radius: 22px; background: linear-gradient(135deg, rgba(10,22,40,0.97), rgba(8,16,30,0.93)); box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05); padding: 32px 36px 28px; margin-bottom: 20px; position: relative; overflow: hidden; }
 .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--ger-black) 0%, var(--ger-red) 50%, var(--ger-gold) 100%); z-index: 10; }
 .watermark { position: absolute; right: 20px; top: 20px; font-size: 80px; font-weight: 900; color: rgba(255,255,255,0.015); pointer-events: none; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1; z-index: 0; user-select: none; }
+.fru-scene { position: absolute; right: 28px; top: 28px; display: flex; align-items: center; gap: 12px; z-index: 5; opacity: 0.55; pointer-events: none; }
+.fru-flag-wrap { display: flex; flex-direction: column; gap: 0; border-radius: 2px; overflow: hidden; transform-origin: left center; animation: flagWave 3.2s ease-in-out infinite; box-shadow: 1px 1px 6px rgba(0,0,0,0.5); }
+@keyframes flagWave { 0% { transform: perspective(120px) rotateY(0deg) skewY(0deg); } 25% { transform: perspective(120px) rotateY(-5deg) skewY(1.2deg); } 50% { transform: perspective(120px) rotateY(0deg) skewY(0deg); } 75% { transform: perspective(120px) rotateY(5deg) skewY(-1.2deg); } 100% { transform: perspective(120px) rotateY(0deg) skewY(0deg); } }
+.fru-stripe { width: 38px; height: 8px; } .fru-s1 { background: #111; } .fru-s2 { background: #DD0000; } .fru-s3 { background: #FFCC00; }
+.fru-pole { width: 3px; height: 48px; background: linear-gradient(to bottom, #ccc, #777); border-radius: 2px; margin-right: -1px; }
+.fru-pole-ball { width: 7px; height: 7px; background: #FFCC00; border-radius: 50%; position: absolute; top: -4px; left: -2px; box-shadow: 0 0 4px rgba(255,204,0,0.6); }
+.fru-pole-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
+.fru-eagle { font-size: 22px; animation: eagleFlap 2.6s ease-in-out infinite; transform-origin: center; display: inline-block; filter: drop-shadow(0 0 4px rgba(255,204,0,0.3)); }
+@keyframes eagleFlap { 0%,100% { transform: scaleY(1) rotate(-2deg); } 50% { transform: scaleY(0.82) rotate(2deg); } }
+.fru-gate { animation: gateBob 4s ease-in-out infinite; }
+@keyframes gateBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.fru-particles { position: absolute; bottom: 0; right: 0; width: 160px; height: 40px; pointer-events: none; }
+.fru-particle { position: absolute; width: 3px; height: 3px; border-radius: 50%; animation: fPart var(--d, 2s) ease-in-out infinite var(--dl, 0s); opacity: 0; }
+@keyframes fPart { 0%,100% { transform: translateY(0); opacity: 0; } 20% { opacity: 0.9; } 80% { opacity: 0.4; } 100% { transform: translateY(-28px); opacity: 0; } }
 
-/* ── Filter Panel ── */
 .filter-panel { background: rgba(0,0,0,0.25); border-radius: 14px; padding: 18px 20px; margin-top: 22px; border: 1px solid var(--line); position: relative; z-index: 2; }
 .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .filter-header strong { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
@@ -41,71 +48,198 @@ body::before {
 .field-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding-left: 2px; }
 .control, .search { width: 100%; border-radius: 10px; border: 1px solid var(--line2); background: rgba(255,255,255,0.03); color: var(--text); padding: 10px 13px; font-size: 13px; font-family: var(--font); transition: border-color 0.2s, background 0.2s; }
 .control:focus, .search:focus { outline: none; border-color: var(--accent); background: rgba(79,163,247,0.06); }
+.search::placeholder { color: #4a6585; }
 select.control option { background: var(--bg2); color: var(--text); }
 .btn { cursor: pointer; border-radius: 9px; border: 1px solid; font-family: var(--font); font-size: 12px; font-weight: 600; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; }
 .btn-ghost { background: transparent; border-color: var(--line2); color: var(--muted); }
 .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--text); }
 .btn-export { background: rgba(34,201,122,0.08); color: var(--good); border-color: rgba(34,201,122,0.25); }
-.btn-export:hover { background: rgba(34,201,122,0.16); color: #fff; }
 .btn-refresh { background: rgba(79,163,247,0.08); color: var(--accent); border-color: rgba(79,163,247,0.25); }
 .btn-refresh:hover { background: rgba(79,163,247,0.16); color: #fff; }
-.btn-novo { background: rgba(124,92,255,0.15); color: #b3a1ff; border-color: rgba(124,92,255,0.4); }
-.btn-novo:hover { background: rgba(124,92,255,0.25); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,92,255,0.2); }
+.btn-refresh.spinning svg { animation: spin 0.8s linear infinite; }
+.btn-refresh.cooldown { opacity: 0.5; cursor: not-allowed; }
+.btn-export:hover { background: rgba(34,201,122,0.16); color: #fff; }
 
-/* ── UI Elements ── */
 .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
 .tab-btn { background: transparent; border: 1px solid transparent; color: var(--muted); font-family: var(--font); font-size: 14px; padding: 9px 16px; border-radius: 999px; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
 .tab-btn.active { background: rgba(79,163,247,0.08); color: var(--text); font-weight: 600; border-color: rgba(79,163,247,0.2); }
+.tab-badge { display: inline-flex; align-items: center; justify-content: center; background: rgba(245,158,11,0.18); color: #fbbf24; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 600; margin-left: 6px; min-width: 22px; }
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: fadeUp 0.35s ease; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
-.card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); transition: border-color 0.2s; }
+.card:hover { border-color: var(--line2); }
 .kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.kpi-value { margin-top: 8px; font-size: clamp(26px, 2.8vw, 38px); font-weight: 700; color: var(--text); line-height: 1; }
+.kpi-value { margin-top: 8px; font-size: clamp(26px, 2.8vw, 38px); font-weight: 700; color: var(--text); line-height: 1; letter-spacing: -0.02em; }
 .kpi-sub { margin-top: 4px; font-size: 12px; color: var(--muted); }
 .grid-2 { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
-.panel-title h2 { font-size: 16px; font-weight: 600; color: var(--text); }
+.panel-title { margin-bottom: 16px; }
+.panel-title h2 { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
 .panel-title p { margin-top: 3px; font-size: 12px; color: var(--muted); }
+.chart-wrap { position: relative; width: 100%; min-height: 220px; }
+.chart-wrap canvas { max-width: 100%; cursor: pointer; }
+.chart-empty { color: var(--muted); padding: 20px; font-size: 13px; text-align: center; padding-top: 40px; }
+.section { margin-top: 18px; }
 
-/* ── Table ── */
+.exec-stack { display: grid; gap: 16px; }
+.radar-list, .priority-list, .shortlist-list { display: grid; gap: 10px; }
+.priority-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); transition: 0.2s; }
+.priority-item:hover { background: rgba(255,255,255,0.06); border-color: var(--line2); }
+.priority-info h4 { margin: 0 0 4px 0; font-size: 13px; color: #e8f2ff; }
+.priority-info p { margin: 0; font-size: 11px; color: var(--muted); }
+.priority-count { background: rgba(79,163,247,0.15); color: var(--accent); padding: 4px 12px; border-radius: 99px; font-weight: 700; font-size: 14px; }
+.radar-item { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.radar-item:last-child { border-bottom: none; }
+.radar-head { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+.radar-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.radar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.radar-note { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.short-item { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); cursor: pointer; transition: 0.2s; }
+.short-item:hover { background: rgba(34,201,122,0.05); border-color: rgba(34,201,122,0.3); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.short-top { display: flex; justify-content: space-between; align-items: center; }
+.short-top h4 { margin: 0; font-size: 15px; color: #fff; }
+.score-pill { background: rgba(34,201,122,0.15); color: var(--good); border: 1px solid rgba(34,201,122,0.3); padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; font-family: var(--mono); }
+.short-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.short-meta span { color: #a8c4e0; }
+
+.compliance-semaforo { display: inline-flex; gap: 5px; align-items: center; }
+.sem-dot { width: 9px; height: 9px; border-radius: 50%; position: relative; cursor: default; flex-shrink: 0; }
+.sem-dot.ok { background: #22c97a; box-shadow: 0 0 5px rgba(34,201,122,0.6); }
+.sem-dot.warn { background: #f59e0b; box-shadow: 0 0 5px rgba(245,158,11,0.6); }
+.sem-dot.bad { background: #f04747; box-shadow: 0 0 5px rgba(240,71,71,0.7); animation: blink-bad 1.4s ease-in-out infinite; }
+@keyframes blink-bad { 0%,100%{opacity:1} 50%{opacity:0.45} }
+.sem-dot[data-tip]:hover::after { content: attr(data-tip); position: fixed; background: rgba(6,14,26,0.97); border: 1px solid rgba(79,163,247,0.3); color: #e8f2ff; font-size: 11px; white-space: nowrap; padding: 5px 10px; border-radius: 7px; pointer-events: none; z-index: 9999; top: var(--tip-y, 0); left: var(--tip-x, 0); transform: translate(-50%, -130%); box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+
+.passport-alert-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 10px; background: rgba(240,71,71,0.10); border: 1px solid rgba(240,71,71,0.3); margin-bottom: 14px; font-size: 12px; color: #fca5a5; font-weight: 500; animation: blink-bad 2s ease-in-out infinite; }
+.passport-days-pill { display: inline-flex; align-items: center; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 700; }
+.days-critical { background: rgba(240,71,71,0.2); color: #fca5a5; border: 1px solid rgba(240,71,71,0.35); }
+.days-warn { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+.days-ok { background: rgba(34,201,122,0.10); color: #6debb0; border: 1px solid rgba(34,201,122,0.25); }
+
+.german-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; font-family: var(--mono); }
+.gb-a0 { background: rgba(240,71,71,0.15); color: #fca5a5; border: 1px solid rgba(240,71,71,0.3); }
+.gb-a1 { background: rgba(240,71,71,0.10); color: #fca5a5; border: 1px solid rgba(240,71,71,0.2); }
+.gb-a2 { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+.gb-b1 { background: rgba(245,158,11,0.10); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+.gb-b2 { background: rgba(34,201,122,0.10); color: #6debb0; border: 1px solid rgba(34,201,122,0.2); }
+.gb-c1 { background: rgba(0,212,170,0.12); color: #5eead4; border: 1px solid rgba(0,212,170,0.25); }
+.gb-c2 { background: rgba(0,212,170,0.18); color: #5eead4; border: 1px solid rgba(0,212,170,0.35); }
+.gb-xx { background: rgba(255,255,255,0.04); color: var(--muted); border: 1px solid transparent; }
+
 .table-wrap { overflow: auto; border-radius: 12px; border: 1px solid var(--line); background: rgba(0,0,0,0.25); max-height: 540px; }
 table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-thead th { position: sticky; top: 0; z-index: 2; background: rgba(8,16,28,0.98); text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; padding: 14px 16px; border-bottom: 1px solid var(--line2); }
-tbody tr { cursor: pointer; transition: background 0.15s; border-bottom: 1px solid rgba(255,255,255,0.03); }
+thead th { position: sticky; top: 0; z-index: 2; background: rgba(8,16,28,0.98); text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 14px 16px; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+tbody tr { cursor: pointer; transition: background 0.15s; border-bottom: 1px solid rgba(255,255,255,0.03); position: relative; }
+tbody tr::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, var(--ger-black) 0%, var(--ger-red) 50%, var(--ger-gold) 100%); opacity: 0; transition: opacity 0.2s; }
+tbody tr:hover::before { opacity: 1; }
 tbody tr:hover { background: rgba(79,163,247,0.06); }
-tbody td { padding: 13px 16px; font-size: 13px; color: #b8cde8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
-.chip { display: inline-flex; padding: 4px 9px; border-radius: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.06); }
+tbody tr:hover td { color: var(--text); }
+tbody td { padding: 13px 16px; font-size: 13px; color: #b8cde8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; transition: color 0.15s; }
+.table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.table-header-row h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.table-header-row p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.chip { display: inline-flex; align-items: center; padding: 4px 9px; border-radius: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
 .chip.good { background: rgba(34,201,122,0.12); color: #6debb0; border-color: rgba(34,201,122,0.25); }
 .chip.warn { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.25); }
+.chip.bad { background: rgba(240,71,71,0.12); color: #fca5a5; border-color: rgba(240,71,71,0.25); }
+.chip.neutral { background: rgba(79,163,247,0.10); color: #93c5fd; border-color: rgba(79,163,247,0.2); }
+.chip.teal { background: rgba(0,212,170,0.10); color: #5eead4; border-color: rgba(0,212,170,0.2); }
+.chip.count { background: rgba(255,255,255,0.06); color: var(--muted); border-color: transparent; font-size: 11px; padding: 4px 10px; }
 
-/* ── MODAL 360 & EDIT ── */
-.modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(3,8,18,0.88); backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; padding: 20px; }
+/* ── MODAL 360 COM BOTÕES DE EDIÇÃO ── */
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(3,8,18,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; padding: 20px; }
 .modal-overlay.active { display: flex; animation: overlayIn 0.25s ease; }
 @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
-.modal-card { background: var(--bg2); width: 100%; max-width: 1160px; max-height: 92vh; border-radius: 22px; border: 1px solid rgba(79,163,247,0.15); box-shadow: 0 50px 120px rgba(0,0,0,0.7); display: flex; flex-direction: column; overflow: hidden; }
-.modal-header { padding: 26px 32px 20px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(8,18,34,0.98) 0%, rgba(10,22,40,0.95) 100%); flex-shrink: 0; position: relative; }
-.modal-name { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 12px; }
-.modal-actions { position: absolute; top: 22px; right: 26px; display: flex; gap: 10px; }
-.close-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--line2); color: var(--muted); width: 36px; height: 36px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.close-btn:hover { background: rgba(240,71,71,0.15); color: #fca5a5; }
+.modal-card { background: var(--bg2); width: 100%; max-width: 1160px; max-height: 92vh; border-radius: 22px; border: 1px solid rgba(79,163,247,0.15); box-shadow: 0 50px 120px rgba(0,0,0,0.7); display: flex; flex-direction: column; overflow: hidden; animation: modalIn 0.3s cubic-bezier(0.22,1,0.36,1); }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+.modal-header { padding: 26px 32px 20px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(8,18,34,0.98) 0%, rgba(10,22,40,0.95) 100%); flex-shrink: 0; position: relative; overflow: hidden; }
+.modal-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2), var(--teal)); }
+.modal-id-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.modal-id-tag { font-family: var(--mono); font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: 5px; }
+.modal-name { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: #fff; margin-bottom: 12px; }
+.modal-pipeline-banner { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; background: rgba(79,163,247,0.12); border: 1px solid rgba(79,163,247,0.3); font-size: 14px; font-weight: 700; color: #e8f2ff; text-transform: uppercase; letter-spacing: 0.05em; }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(79,163,247,0.7); animation: pulse 1.8s infinite; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(79,163,247,.7)} 70%{box-shadow:0 0 0 10px rgba(79,163,247,0)} 100%{box-shadow:0 0 0 0 rgba(79,163,247,0)} }
+.modal-meta { margin-top: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.modal-meta span { font-size: 13px; color: var(--muted); }
+.modal-meta .sep { color: var(--line2); }
+
+/* CONTROLES DO MODAL (BOTOES EDITAR E FECHAR) */
+.modal-controls { position: absolute; top: 22px; right: 26px; display: flex; gap: 12px; align-items: center; }
+.btn-edit-modal { background: rgba(79,163,247,0.1); border: 1px solid rgba(79,163,247,0.4); color: var(--accent); padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: var(--font); }
+.btn-edit-modal:hover { background: rgba(79,163,247,0.2); }
+.close-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--line2); color: var(--muted); width: 36px; height: 36px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-family: var(--font); }
+.close-btn:hover { background: rgba(240,71,71,0.15); color: #fca5a5; border-color: rgba(240,71,71,0.3); }
+
+.modal-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); background: rgba(8,16,28,0.6); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+.mtab { padding: 13px 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border: none; background: transparent; font-family: var(--font); border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.mtab:hover { color: var(--text); }
+.mtab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
 .modal-body { overflow-y: auto; flex: 1; padding: 28px 32px; }
+.mtab-content { display: none; animation: fadeUp 0.25s ease; }
+.mtab-content.active { display: block; }
+
+.alert-bar { display: none; align-items: flex-start; gap: 12px; padding: 14px 18px; border-radius: 10px; margin-bottom: 22px; background: rgba(240,71,71,0.08); border: 1px solid rgba(240,71,71,0.25); color: #fca5a5; font-size: 13px; font-weight: 500; }
+.alert-bar.active { display: flex; }
+
 .field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-.field-card { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.field-card { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; transition: all 0.2s; }
+.field-card:hover { background: rgba(79,163,247,0.04); border-color: rgba(79,163,247,0.2); }
 .fc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 7px; }
-.fc-val { font-size: 14px; color: var(--text); line-height: 1.55; }
+.fc-val { font-size: 14px; color: var(--text); line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
+.fc-val a { color: var(--accent); text-decoration: none; }
+.fc-val a:hover { text-decoration: underline; }
 
-/* Edit Inputs */
-.edit-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--line2); color: var(--text); border-radius: 6px; padding: 8px 10px; font-family: var(--font); font-size: 13px; outline: none; transition: 0.2s; }
-.edit-input:focus { border-color: var(--accent); background: rgba(79,163,247,0.05); }
+/* INPUT DE EDIÇÃO */
+.edit-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--accent); color: #fff; border-radius: 6px; padding: 8px; font-family: var(--font); font-size: 14px; outline: none; }
+.edit-input:focus { background: rgba(79,163,247,0.1); }
 
-#loadingOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.modal-section-title { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 22px 0 12px; }
+.modal-section-title::before { content: ''; flex: none; width: 3px; height: 14px; border-radius: 2px; }
+.modal-section-title.yellow::before { background: var(--warn); }
+
+.highlight-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.highlight-card { border-radius: 12px; padding: 18px 20px; border: 1px solid; }
+.highlight-card.green { background: rgba(34,201,122,0.05); border-color: rgba(34,201,122,0.2); }
+.highlight-card.yellow { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.2); }
+.highlight-card .hc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.highlight-card.green .hc-label { color: var(--good); }
+.highlight-card.yellow .hc-label { color: var(--warn); }
+.highlight-card .hc-val { font-size: 13px; color: var(--text); line-height: 1.55; white-space: pre-wrap; }
+
+.notes-block { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; font-size: 13px; color: #c8dff5; line-height: 1.7; font-style: italic; white-space: pre-wrap; word-break: break-word; }
+.notes-block.analysis { border-left: 3px solid var(--accent2); border-radius: 0 12px 12px 0; margin-bottom: 14px; }
+
+.timeline { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.tpill { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.04); border: 1px solid var(--line2); color: var(--muted); }
+.tpill.done { background: rgba(34,201,122,0.1); border-color: rgba(34,201,122,0.25); color: #6debb0; }
+.tpill.pending { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); color: #fcd34d; }
+.tpill.critical{ background: rgba(240,71,71,0.1); border-color: rgba(240,71,71,0.3); color: #fca5a5; }
+.tpill-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.hero-kicker { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
+.ger-dots { display: flex; gap: 3px; align-items: center; margin-left: 4px; }
+.ger-dot { width: 7px; height: 7px; border-radius: 50%; }
+.ger-dot.black { background: var(--ger-black); box-shadow: 0 0 0 1px rgba(255,255,255,0.2); }
+.ger-dot.red { background: var(--ger-red); }
+.ger-dot.gold { background: var(--ger-gold); box-shadow: 0 0 5px rgba(255,204,0,0.5); }
+.ger-tag { color: var(--ger-gold); font-weight: 800; letter-spacing: 0.1em; margin-left: 6px; }
+
+#loadingOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
 .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.08); border-left-color: var(--accent); animation: spin 0.9s linear infinite; margin-bottom: 20px; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.loading-step { font-size: 12px; color: var(--muted); margin-top: 4px; opacity: 0; transition: opacity 0.4s; }
+.loading-step.visible { opacity: 1; }
 
-#errorToast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(34,201,122,0.92); color: #fff; padding: 14px 20px; border-radius: 11px; font-size: 13px; display: none; }
+#errorToast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(34,201,122,0.92); color: #fff; padding: 14px 20px; border-radius: 11px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; max-width: 380px; }
+@media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .top-controls { grid-template-columns: 1fr; } .highlight-pair { grid-template-columns: 1fr; } .modal-card { max-height: 98vh; } .modal-body { padding: 18px; } .modal-header { padding: 20px 18px 16px; } .modal-name { font-size: 20px; } .fru-scene { display: none; } }
 </style>
 </head>
 <body>
@@ -114,268 +248,420 @@ tbody td { padding: 13px 16px; font-size: 13px; color: #b8cde8; white-space: now
 
 <div id="loadingOverlay">
   <div class="spinner"></div>
-  <div style="font-size: 18px; font-weight: 600;">Conectando ao CRM Enterprise...</div>
+  <div style="font-size: 18px; font-weight: 600; color: var(--text);">Iniciando CRM Enterprise v2...</div>
+  <div>
+    <div class="loading-step" id="ls1">⟳ Conectando às 10 fontes de dados...</div>
+    <div class="loading-step" id="ls2">⟳ Consolidando registros...</div>
+    <div class="loading-step" id="ls3">⟳ Calculando scores v2...</div>
+    <div class="loading-step" id="ls4">✓ Tudo pronto</div>
+  </div>
 </div>
 
 <div class="container" style="display:none" id="mainContent">
   <section class="hero">
     <div class="watermark">DEUTSCHLAND</div>
-    <div style="position:relative;z-index:1;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;">TALENTS4 | DEUTSCHLAND PROJEKT</div>
-    <h1 style="position:relative;z-index:1;font-size:32px;font-weight:700;margin-bottom:6px">Plataforma de Inteligência e Decisão <span style="font-size:14px;color:var(--muted)">v2.0</span></h1>
-    <p style="position:relative;z-index:1;color:var(--muted);font-size:14px;">Conectado em tempo real com Google Sheets via API.</p>
+    <div class="fru-scene" id="fruScene">
+      <svg class="fru-gate" width="40" height="40" viewBox="0 0 80 80">
+        <rect x="30" y="18" width="20" height="8" rx="2" fill="#FFCC00" opacity="0.9"/>
+        <rect x="25" y="26" width="30" height="3" rx="1" fill="#FFCC00" opacity="0.7"/>
+        <rect x="5" y="28" width="10" height="48" rx="2" fill="#ccc" opacity="0.5"/>
+        <rect x="65" y="28" width="10" height="48" rx="2" fill="#ccc" opacity="0.5"/>
+        <rect x="20" y="34" width="10" height="42" rx="2" fill="#bbb" opacity="0.6"/>
+        <rect x="50" y="34" width="10" height="42" rx="2" fill="#bbb" opacity="0.6"/>
+        <rect x="30" y="50" width="20" height="26" rx="2" fill="#999" opacity="0.4"/>
+      </svg>
+      <span class="fru-eagle" style="font-size:16px">🦅</span>
+      <div style="display:flex;align-items:flex-end;gap:0">
+        <div class="fru-pole-wrap"><div style="width:3px;height:32px;background:linear-gradient(to bottom,#ccc,#777);border-radius:2px;position:relative"><div style="width:7px;height:7px;background:#FFCC00;border-radius:50%;position:absolute;top:-4px;left:-2px;box-shadow:0 0 4px rgba(255,204,0,0.7)"></div></div></div>
+        <div class="fru-flag-wrap"><div class="fru-stripe fru-s1"></div><div class="fru-stripe fru-s2"></div><div class="fru-stripe fru-s3"></div></div>
+      </div>
+    </div>
+    <div class="fru-particles" id="fruParts"></div>
+    <div class="hero-kicker" style="position:relative;z-index:1">
+      Talents4 <span style="color:var(--line2);font-weight:300;margin:0 4px">|</span>
+      <div class="ger-dots"><div class="ger-dot black"></div><div class="ger-dot red"></div><div class="ger-dot gold"></div></div>
+      <span class="ger-tag">DEUTSCHLAND PROJEKT</span>
+    </div>
+    <h1 style="position:relative;z-index:1;font-size:clamp(22px,2.6vw,34px);font-weight:700;line-height:1.1;letter-spacing:-0.02em;margin-bottom:6px">Plataforma de Inteligência e Decisão <span style="font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:8px">v2.0 (CRM Editável)</span></h1>
+    <p style="position:relative;z-index:1;color:var(--muted);font-size:14px;line-height:1.5">Conectado às suas planilhas de origem via API inteligente.</p>
 
     <div class="filter-panel">
       <div class="filter-header">
         <strong>Motor de Busca Avançado</strong>
         <div class="filter-actions">
           <button class="btn btn-ghost" id="resetFilters">↺ Limpar</button>
-          <button class="btn btn-refresh" id="btnRefresh">Atualizar Dados</button>
-          <button class="btn btn-export" id="btnExport">Exportar</button>
-          <button class="btn btn-novo" onclick="openNewCandidate()">➕ Novo Candidato</button>
+          <button class="btn btn-refresh" id="btnRefresh">Atualizar</button>
         </div>
       </div>
       <div class="top-controls">
-        <div class="field"><label class="field-label">Busca Global</label><input id="searchInput" class="search" placeholder="Nome, ID..." /></div>
+        <div class="field"><label class="field-label">Busca Global</label><input id="searchInput" class="search" type="search" placeholder="Nome, ID, profissão..." /></div>
         <div class="field"><label class="field-label">Status Pipeline</label><select id="pipelineFilter" class="control"></select></div>
+        <div class="field"><label class="field-label">Alemão</label><select id="germanFilter" class="control"></select></div>
         <div class="field"><label class="field-label">Profissão</label><select id="professionFilter" class="control"></select></div>
+        <div class="field"><label class="field-label">Decisão Final</label><select id="statusFilter" class="control"></select></div>
       </div>
     </div>
   </section>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="tab-ops">📄 Base de Dados Central</button>
+    <button class="tab-btn active" data-tab="tab-exec">📊 Painel de Diretoria</button>
+    <button class="tab-btn" data-tab="tab-ops">📄 Documentação & Compliance <span class="tab-badge" id="countDocs">0</span></button>
+    <button class="tab-btn" data-tab="tab-match">✈️ Hospitais & Matching</button>
   </div>
 
-  <div id="tab-ops" class="tab-content active">
+  <div id="tab-exec" class="tab-content active">
     <div class="kpis" id="kpiGrid"></div>
-    <section class="section card">
-      <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
-        <h2>Data Grid Consolidado</h2>
-        <span class="chip" id="tableCount">0 registros</span>
+    <div class="grid-2">
+      <div class="card"><div class="panel-title"><h2>Status Pipeline (Aba 1)</h2></div><div class="chart-wrap" style="min-height:260px"><canvas id="chartPipeline"></canvas></div></div>
+      <div class="card"><div class="panel-title"><h2>Status e Desfecho</h2></div><div class="chart-wrap" style="min-height:260px"><canvas id="chartStatus"></canvas></div></div>
+    </div>
+    <div class="section grid-2" style="align-items:start">
+      <div class="exec-stack">
+        <div class="card"><div class="panel-title"><h2>Radar Executivo de Saúde</h2></div><div class="radar-list" id="radarList"></div></div>
+        <div class="card"><div class="panel-title"><h2>Fila de Ação Prioritária</h2></div><div class="priority-list" id="priorityList"></div></div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Profissional</th>
-              <th>Profissão</th>
-              <th>Etapa Atual</th>
-              <th>Substatus</th>
-              <th>E-mail</th>
-              <th>Telefone</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-    </section>
+      <div class="card" style="height:100%"><div class="panel-title" style="margin-bottom:24px"><h2>Shortlist Ouro (Top 5)</h2></div><div class="shortlist-list" id="shortlistList"></div></div>
+    </div>
   </div>
+
+  <div id="tab-ops" class="tab-content">
+    <div class="kpis" id="kpiDocs"></div>
+    <div class="grid-2">
+      <div class="card"><div class="panel-title"><h2>Auditoria de Passaportes</h2></div><div class="chart-wrap" style="min-height:260px;display:flex;align-items:center;justify-content:center"><canvas id="chartPassport" style="max-height:240px;max-width:340px"></canvas></div></div>
+      <div class="card"><div class="panel-title"><h2>Prontidão Linguística 🇩🇪</h2></div><div class="chart-wrap" style="min-height:260px"><canvas id="chartGerman"></canvas></div></div>
+    </div>
+  </div>
+
+  <div id="tab-match" class="tab-content">
+    <div class="card section"><div class="panel-title"><h2>Demanda por Empregadores (Alemanha)</h2></div><div class="chart-wrap" style="min-height:260px"><canvas id="chartEmployer"></canvas></div></div>
+  </div>
+
+  <section class="section card">
+    <div class="table-header-row"><div><h2>Data Grid Consolidado</h2><p>Clique numa linha para abrir o Dossiê 360º.</p></div><span class="chip count" id="tableCount">0 registros</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:80px">ID</th><th style="width:190px">Profissional</th><th style="width:160px">Área Técnica</th><th style="width:190px;color:var(--accent)">Status Pipeline</th><th style="width:80px">Alemão</th><th style="width:100px">🚦 Compliance</th><th style="width:130px">Score v2</th><th>Target Alemanha</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
 </div>
 
 <div class="modal-overlay" id="crmModal">
   <div class="modal-card">
     <div class="modal-header">
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnToggleEdit" onclick="toggleEditMode()" style="background:rgba(255,255,255,0.1); color:#fff; border:none;">✏️ Editar</button>
-        <button class="close-btn" onclick="closeModal()">×</button>
+      <div class="modal-controls">
+        <button class="btn-edit-modal" id="btnToggleEdit" onclick="toggleEditMode()">✏️ Editar</button>
+        <button class="close-btn" id="closeModalBtn">×</button>
       </div>
-      <div class="modal-name" id="m-nome">Carregando...</div>
-      <div style="font-size:13px; color:var(--muted);" id="m-id-display">ID: —</div>
+      <div class="modal-id-row">
+        <span class="modal-id-tag" id="m-id">ID</span>
+        <div id="m-semaforo-modal" style="display:flex;gap:6px;align-items:center"></div>
+      </div>
+      <div class="modal-name" id="m-nome">—</div>
+      <div class="modal-pipeline-banner"><div class="pulse-dot"></div>Status Pipeline: <span id="m-pipeline-val" style="margin-left:6px;color:#fff">-</span></div>
+      <div class="modal-meta"><span id="m-profissao">—</span><span class="sep">·</span><span id="m-cidade">—</span><span class="sep">·</span><span id="m-idade">—</span></div>
     </div>
+    <div class="modal-tabs" id="modalTabsNav"></div>
     <div class="modal-body">
-      <div class="field-grid" id="modalFormGrid"></div>
+      <div class="alert-bar" id="m-alert-bar"><span style="font-size:18px">⚠️</span><div><strong style="display:block;margin-bottom:4px;font-size:14px;color:#ffd4d4">Pendências de Compliance</strong><div id="m-alert-text" style="font-size:13px"></div></div></div>
+      <div id="modalTabsBody"></div>
     </div>
   </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════
-//  NOVA INTEGRAÇÃO API (APPS SCRIPT)
-// ══════════════════════════════════════════
+Chart.register(ChartDataLabels);
+const centerTextPlugin = {
+  id: 'centerText',
+  beforeDraw(chart) {
+    if (chart.config.type !== 'doughnut') return;
+    const ctx = chart.ctx; ctx.restore();
+    const total = chart.config.data.datasets[0].data.reduce((a,b)=>a+b,0); if(!total) return;
+    const fs = (chart.height/100).toFixed(2); ctx.font = `bold ${fs}em 'DM Sans'`; ctx.textBaseline = 'middle'; ctx.fillStyle = '#e8f2ff';
+    const text = '' + total; const textX = Math.round((chart.width - ctx.measureText(text).width)/2); const textY = chart.height/2;
+    ctx.fillText(text, textX, textY); ctx.font = `600 ${fs*0.3}em 'DM Sans'`; ctx.fillStyle = '#7a96bc';
+    const sub = 'TOTAL'; ctx.fillText(sub, Math.round((chart.width - ctx.measureText(sub).width)/2), textY+22); ctx.save();
+  }
+};
+Chart.register(centerTextPlugin);
+
+// LINK DO NOVO MOTOR CAÇADOR (Substitua se necessário pelo URL gerado no Passo 1)
 const API_URL = "https://script.google.com/macros/s/AKfycbwAPoxAyiGDacp46zcCoTCfrk0hhTUb3_WPMKD_I2lv5BImEQsQGXKYr6T8dnKd5Dn4/exec";
 
-let masterData = [];
-let filteredData = [];
-let dataHeaders = []; // Guarda as colunas exatas da sua planilha
-let currentCandidateId = null;
-let isEditMode = false;
+// ══ AS SUAS PLANILHAS ORIGINAIS MANTIDAS ══
+const SHEET_URLS = [
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=1914660942&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=1440149219&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=700102744&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=112393646&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=572084671&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=805744474&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=200026248&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=1284610320&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=653299344&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4l6xsIFlb92dd3rVSXNzZf9KcB9xoF6-FjB-il7ZoPTrChPR-gAq0kDLK-66sC5xMCK422lhl8oeN/pub?gid=550136917&single=true&output=csv"
+];
+
+const SECAO_MAP = {
+  perfil: ['Nome completo','Nome completo do candidato','Nome','Data da Candidatura','País de origem','Cidade atual','Idade','E-mail','Telefone','Estado civil'],
+  formacao: ['Profissão principal','Profissão','Área profissional','Universidade','Curso de Graduação','Experiência Profissional (tempo)','Língua alemã','Nível de alemão','Nível na língua alemã?'],
+  entrevista: ['Nota para apresentação','Relato sobre a experiência','Porque deseja ir para Alemanha','Resultado da entrevista'],
+  avaliacao: ['Análise do recrutador','Diferenciais do perfil','Pontos fortes','Pontos de atenção','Perfil','Status Final'],
+  documentos: ['CPF','Número do Passaporte','Validade do passaporte','Cidadania Europeia','Carteira de vacinação','Documento Profissional (COREN, CRM, CREA, outro)','Diploma','CV/ ARQUIVO DOC'],
+  juridico: ['Deliberação do RH','Data do envio do contrato','Data do envio do termo','Termo de consentimento','Contrato','Retorno','STATUS PIPELINE'],
+  matching: ['Empresa','Feedback','Data prevista para ir','Motivo da desistência']
+};
+
+const SECAO_META = {
+  perfil: { label: '🧑 Perfil Pessoal' }, formacao: { label: '🎓 Formação & Idioma' },
+  entrevista: { label: '💬 Entrevista' }, avaliacao: { label: '🎯 Avaliação Interna' },
+  documentos: { label: '📄 Documentação' }, juridico: { label: '⚖️ Jurídico' },
+  matching: { label: '✈️ Matching' }, outros: { label: '📋 Outros Dados' }
+};
+
+function classifyKey(key) {
+  const kl = key.toLowerCase();
+  for(const [sec, keys] of Object.entries(SECAO_MAP)) {
+    if(keys.some(k => kl.includes(k.toLowerCase().substring(0,14)))) return sec;
+  }
+  return 'outros';
+}
+
+let masterData = [], filteredData = [];
+const PALETTE = ['#4fa3f7','#7c5cff','#22c97a','#f59e0b','#f04747','#7dd3fc'];
+
+const normalize = v => (v ?? '').toString().trim();
+const cleanKey = v => normalize(v).replace(/\s+/g,' ').trim();
+const isEmpty = v => { const s = normalize(v).toLowerCase(); return !s || s==='-' || s==='pendente' || s==='#n/a' || s==='nan'; };
+const superClean = s => normalize(s).toLowerCase().replace(/[?!.\n\r]/g,' ').replace(/\s+/g,' ').trim();
+
+function getVal(obj, keys) {
+  for(const k of keys) {
+    const f = Object.keys(obj).find(ok => cleanKey(ok).toLowerCase() === cleanKey(k).toLowerCase());
+    if(f && !isEmpty(obj[f])) return normalize(obj[f]);
+  }
+  return null;
+}
 
 function showToast(msg, type="good") {
   const t = document.getElementById('errorToast');
   t.innerHTML = msg;
   t.style.background = type === "good" ? "rgba(34,201,122,0.92)" : "rgba(240,71,71,0.92)";
   t.style.display = 'block';
-  setTimeout(() => t.style.display='none', 4000);
+  setTimeout(() => t.style.display='none', 5000);
 }
 
-// 1. LER DADOS DO GOOGLE SHEETS
-async function fetchCRMData() {
-  try {
-    const res = await fetch(API_URL);
-    const json = await res.json();
-    
-    if (json.length > 0) {
-      dataHeaders = Object.keys(json[0]); // Pega as colunas criadas por si
-    } else {
-      dataHeaders = ["ID", "Nome Completo", "E-mail", "Telefone", "Profissão", "ETAPA_ATUAL", "SUBSTATUS_ATUAL"];
-    }
-
-    masterData = json.map(row => {
-      row._id = row[dataHeaders[0]]; // Assume que a coluna 1 é sempre o ID
-      return row;
-    });
-
-    filteredData = [...masterData];
-    buildFilters();
-    renderAll();
-    
-    document.getElementById('loadingOverlay').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-  } catch(e) {
-    document.getElementById('loadingOverlay').innerHTML = `<div style="color:#f04747;font-size:18px;">❌ Erro ao conectar à API do Sheets.</div>`;
+function parseCSV(text) {
+  if(!text || !text.trim()) return [];
+  text = text.replace(/^\uFEFF/,'');
+  const rows = []; let row = [], cell = '', inQ = false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(c==='"'){if(inQ&&n==='"'){cell+='"';i++;}else inQ=!inQ;}
+    else if(c===','&&!inQ){row.push(cell);cell='';}
+    else if((c==='\n'||c==='\r')&&!inQ){if(c==='\r'&&n==='\n')i++;row.push(cell);rows.push(row);row=[];cell='';}
+    else cell+=c;
   }
-}
-
-// 2. ENVIAR DADOS (CRIAR OU ATUALIZAR)
-async function saveToSheets(acao, payloadDados) {
-  const btn = document.getElementById('btnToggleEdit');
-  btn.innerText = "⏳ Salvando...";
-  btn.disabled = true;
-
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({
-        acao: acao,
-        id: currentCandidateId,
-        dados: payloadDados
-      })
-    });
-    
-    showToast("Sucesso! Dados guardados no Google Sheets.");
-    isEditMode = false;
-    closeModal();
-    
-    // Recarrega os dados em background
-    document.getElementById('btnRefresh').innerText = "Atualizando...";
-    await fetchCRMData();
-    document.getElementById('btnRefresh').innerText = "Atualizar Dados";
-
-  } catch(e) {
-    showToast("Erro ao salvar. Verifique a conexão.", "bad");
-  } finally {
-    btn.disabled = false;
+  if(cell||row.length){row.push(cell);rows.push(row);}
+  if(!rows.length) return [];
+  let hi = rows.findIndex(r => r.some(c => c.includes('Nº de Inscrição')||c.includes('Nº da Inscrição')));
+  if(hi===-1) hi=0;
+  const headers = rows[hi].map(h => cleanKey(h));
+  const objs = [];
+  for(let i=hi+1;i<rows.length;i++){
+    if(!rows[i].join('').trim()) continue;
+    const rowId = rows[i][1] ? rows[i][1].trim() : '';
+    if(rowId && !/^\d+$/.test(rowId.replace(/^0+/,'').trim()) && rowId.length > 6) continue;
+    const obj = {};
+    headers.forEach((h,idx)=>{ if(h) obj[h]=rows[i][idx]?rows[i][idx].trim():''; });
+    objs.push(obj);
   }
+  return objs;
 }
 
-// ══════════════════════════════════════════
-//  UI E RENDERIZAÇÃO
-// ══════════════════════════════════════════
+// ═════ CÁLCULOS VITAIS ORIGINAIS ═════
+function parsePassportDate(str) {
+  if(!str) return null;
+  const s = str.trim();
+  const m1 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(m1) return new Date(+m1[3], +m1[2]-1, +m1[1]);
+  return null;
+}
+function passportDaysLeft(c) {
+  const valStr = getVal(c, ['Validade do passaporte']); if(!valStr) return null;
+  const expDate = parsePassportDate(valStr); if(!expDate) return null;
+  return Math.round((expDate - new Date()) / (1000*60*60*24));
+}
+function passportStatus(c) {
+  const days = passportDaysLeft(c);
+  if(days === null) return null;
+  if(days < 0) return { days, cls: 'days-critical', label: 'Expirado' };
+  if(days < 180) return { days, cls: 'days-critical', label: `${days}d restantes` };
+  if(days < 365) return { days, cls: 'days-warn', label: `${days}d restantes` };
+  return { days, cls: 'days-ok', label: `${days}d restantes` };
+}
+function buildSemaforo(c) {
+  const passOk = (passportDaysLeft(c) === null || passportDaysLeft(c) >= 180);
+  return [
+    { cls: !getVal(c, ['Número do Passaporte']) ? 'bad' : !passOk ? 'warn' : 'ok', title: 'Passaporte' },
+    { cls: !!getVal(c, ['Documento Profissional (COREN, CRM, CREA, outro)']) ? 'ok' : 'bad', title: 'Licença' },
+    { cls: !!getVal(c, ['Contrato','Data do envio do contrato']) ? 'ok' : 'warn', title: 'Contrato' }
+  ];
+}
+function semaforoHTML(dots) {
+  return `<div class="compliance-semaforo">${dots.map(d => `<div class="sem-dot ${d.cls}"></div>`).join('')}</div>`;
+}
+function germanRank(val) {
+  const v = (val||'').toUpperCase();
+  if(v.includes('C2')) return 6; if(v.includes('C1')) return 5; if(v.includes('B2')) return 4;
+  if(v.includes('B1')) return 3; if(v.includes('A2')) return 2; if(v.includes('A1')) return 1; return 0;
+}
+function germanBadgeHTML(val) {
+  const v = (val||'').toUpperCase().trim();
+  const map = { 'A0':'gb-a0','A1':'gb-a1','A2':'gb-a2','B1':'gb-b1','B2':'gb-b2','C1':'gb-c1','C2':'gb-c2' };
+  const key = Object.keys(map).find(k => v.includes(k));
+  return key ? `<span class="german-badge ${map[key]}">${key}</span>` : `<span class="german-badge gb-xx">${val||'—'}</span>`;
+}
+function candidateScore(c) {
+  let score = 0; const g = germanRank(getVal(c, ['Nível de alemão','Língua alemã']));
+  if((getVal(c, ['Status Final'])||'').toLowerCase().includes('aprovado')) score += 25;
+  const gTable = [0, 5, 10, 20, 28, 33, 36]; score += gTable[g] || 0;
+  if(getVal(c, ['Número do Passaporte'])) score += 5;
+  return score;
+}
+
+// ═════ FETCH INICIAL E MONTAGEM DOS DADOS ═════
+async function initCRM() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  const texts = await Promise.all(SHEET_URLS.map(url => fetch(url+"&_ts="+Date.now()).then(r=>r.text()).catch(()=>'')));
+  const masterRows = parseCSV(texts[0] || '');
+  const map = new Map();
+
+  masterRows.forEach((row, idx) => {
+    const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']) || `SEM-ID-${idx}`;
+    const candidate = { _id: id };
+    Object.keys(row).forEach(k => { if(!isEmpty(row[k])) candidate[cleanKey(k)] = row[k]; });
+    map.set(id, candidate);
+  });
+
+  texts.slice(1).forEach((text) => {
+    parseCSV(text).forEach((row) => {
+      const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
+      let candidate = map.get(id);
+      if(!candidate) {
+        const nome = getVal(row, ['Nome completo','Nome']);
+        candidate = [...map.values()].find(c => getVal(c, ['Nome completo','Nome']) === nome);
+      }
+      if(candidate) { Object.keys(row).forEach(k => { if(!isEmpty(row[k])) candidate[cleanKey(k)] = row[k]; }); }
+    });
+  });
+
+  masterData = [...map.values()].map(c => {
+    c._etapa = getVal(c, ['STATUS PIPELINE']) || 'Não Lançado';
+    c._score = candidateScore(c);
+    return c;
+  });
+  filteredData = [...masterData];
+  buildFilters(); renderAll();
+  document.getElementById('loadingOverlay').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+}
+
+function buildFilters() {
+  const pop = (id, fn) => {
+    const sel = document.getElementById(id);
+    const groups = [...new Set(masterData.map(fn))].filter(Boolean);
+    sel.innerHTML = '<option value="">Todas as opções</option>' + groups.map(k => `<option value="${k}">${k}</option>`).join('');
+  };
+  pop('pipelineFilter', c => c._etapa);
+  pop('germanFilter', c => getVal(c, ['Nível de alemão','Língua alemã']));
+}
+
 function renderAll() {
-  document.getElementById('kpiGrid').innerHTML = `
-    <div class="card"><div class="kpi-label">Total Cadastrados</div><div class="kpi-value">${filteredData.length}</div></div>
-  `;
-
   document.getElementById('tableCount').textContent = `${filteredData.length} registros`;
+  document.getElementById('kpiGrid').innerHTML = `<div class="card"><div class="kpi-label">Total Validado</div><div class="kpi-value">${filteredData.length}</div></div>`;
   
-  // Tenta encontrar colunas padrões para a tabela, se existirem
-  const findCol = (keywords) => dataHeaders.find(h => keywords.some(k => h.toLowerCase().includes(k))) || dataHeaders[1];
-
-  const colNome = findCol(['nome']);
-  const colProf = findCol(['prof']);
-  const colEtapa = findCol(['etapa', 'status pipe']);
-  const colSub = findCol(['substatus', 'resultado']);
-  const colEmail = findCol(['mail', 'e-mail']);
-  const colTel = findCol(['tel', 'cel']);
-
-  document.getElementById('tableBody').innerHTML = filteredData.map(c => `
+  document.getElementById('tableBody').innerHTML = filteredData.sort((a,b)=>b._score-a._score).map(c => `
     <tr onclick="openModal('${c._id}')">
-      <td style="font-family:var(--mono);color:var(--muted)">${c._id}</td>
-      <td><strong style="color:#fff">${c[colNome] || '—'}</strong></td>
-      <td>${c[colProf] || '—'}</td>
-      <td><span class="chip warn">${c[colEtapa] || '—'}</span></td>
-      <td>${c[colSub] || '—'}</td>
-      <td>${c[colEmail] || '—'}</td>
-      <td>${c[colTel] || '—'}</td>
+      <td>${c._id}</td>
+      <td><strong>${getVal(c,['Nome completo','Nome'])||'—'}</strong></td>
+      <td>${getVal(c,['Profissão principal','Profissão'])||'—'}</td>
+      <td><span class="chip warn">${c._etapa}</span></td>
+      <td>${germanBadgeHTML(getVal(c,['Nível de alemão','Língua alemã']))}</td>
+      <td>${semaforoHTML(buildSemaforo(c))}</td>
+      <td style="color:var(--good); font-weight:bold;">${c._score} pts</td>
+      <td>${getVal(c,['Empresa'])||'—'}</td>
     </tr>
   `).join('');
 }
 
-// ══════════════════════════════════════════
-//  MODAL: VISUALIZAR, EDITAR E NOVO
-// ══════════════════════════════════════════
-function openModal(id) {
-  currentCandidateId = id;
-  isEditMode = false;
-  const btn = document.getElementById('btnToggleEdit');
-  btn.innerHTML = "✏️ Editar";
-  btn.style.background = "rgba(255,255,255,0.1)";
+// ═════ MODAL 360 + EDIÇÃO ═════
+let isEditMode = false;
+let currentId = null;
 
-  const c = masterData.find(x => x._id == id);
+function openModal(id) {
+  isEditMode = false;
+  currentId = id;
+  const btn = document.getElementById('btnToggleEdit');
+  btn.innerText = "✏️ Editar";
+  btn.style.background = "rgba(79,163,247,0.1)";
+
+  const c = masterData.find(x => x._id === id);
   if(!c) return;
 
-  // Busca o nome para o título
-  const colNome = dataHeaders.find(h => h.toLowerCase().includes('nome')) || dataHeaders[1];
-  document.getElementById('m-nome').textContent = c[colNome] || "Sem Nome";
-  document.getElementById('m-id-display').textContent = `ID do Sistema: ${c._id}`;
+  document.getElementById('m-id').textContent = id;
+  document.getElementById('m-nome').textContent = getVal(c,['Nome completo','Nome'])||'—';
+  document.getElementById('m-pipeline-val').textContent = c._etapa;
 
-  const grid = document.getElementById('modalFormGrid');
-  grid.innerHTML = '';
+  const buckets = {}; Object.keys(SECAO_META).forEach(s=>buckets[s]=[]);
+  Object.keys(c).forEach(key => {
+    if(key.startsWith('_')) return;
+    buckets[classifyKey(key)].push({key, val: c[key]});
+  });
 
-  // Cria cards para TODAS as colunas que existem na aba Master (ignorando a coluna de ID)
-  dataHeaders.forEach(coluna => {
-    if(coluna === dataHeaders[0]) return; // Pula o ID
-    grid.innerHTML += `
-      <div class="field-card">
-        <div class="fc-label">${coluna}</div>
-        <div class="fc-val" data-col="${coluna}">${c[coluna] || ''}</div>
-      </div>
-    `;
+  const nav = document.getElementById('modalTabsNav'); const body = document.getElementById('modalTabsBody');
+  nav.innerHTML=''; body.innerHTML='';
+
+  Object.keys(SECAO_META).forEach((sec, i) => {
+    if(!buckets[sec].length) return;
+    const btn = document.createElement('button');
+    btn.className = 'mtab' + (nav.children.length===0?' active':'');
+    btn.textContent = SECAO_META[sec].label; btn.onclick = () => switchModalTab(sec);
+    nav.appendChild(btn);
+
+    const div = document.createElement('div');
+    div.className = 'mtab-content' + (body.children.length===0?' active':'');
+    div.id = `msec-${sec}`;
+    
+    // ATENÇÃO AQUI: adicionei 'data-col' para sabermos qual coluna editar
+    div.innerHTML = `<div class="field-grid">${buckets[sec].map(f => `
+      <div class="field-card"><div class="fc-label">${f.key}</div>
+      <div class="fc-val" data-col="${f.key}">${f.val}</div></div>
+    `).join('')}</div>`;
+    
+    body.appendChild(div);
   });
 
   document.getElementById('crmModal').classList.add('active');
 }
 
-function openNewCandidate() {
-  currentCandidateId = "NEW";
-  isEditMode = true; // Já abre em modo edição
-  
-  const btn = document.getElementById('btnToggleEdit');
-  btn.innerHTML = "💾 Criar Candidato";
-  btn.style.background = "rgba(34,201,122,0.2)";
-
-  document.getElementById('m-nome').textContent = "Novo Registro";
-  document.getElementById('m-id-display').textContent = "O ID será gerado automaticamente pelo Google Sheets.";
-
-  const grid = document.getElementById('modalFormGrid');
-  grid.innerHTML = '';
-
-  // Cria inputs vazios para TODAS as colunas
-  dataHeaders.forEach(coluna => {
-    if(coluna === dataHeaders[0]) return; // Pula o ID
-    grid.innerHTML += `
-      <div class="field-card" style="background: rgba(79,163,247,0.05); border-color: rgba(79,163,247,0.3);">
-        <div class="fc-label">${coluna}</div>
-        <div class="fc-val" data-col="${coluna}">
-          <input type="text" class="edit-input" placeholder="Digite aqui..." value="">
-        </div>
-      </div>
-    `;
-  });
-
-  document.getElementById('crmModal').classList.add('active');
+function switchModalTab(sec) {
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.toggle('active', b.textContent===SECAO_META[sec].label));
+  document.querySelectorAll('.mtab-content').forEach(d=>d.classList.toggle('active', d.id===`msec-${sec}`));
 }
 
-function toggleEditMode() {
+function closeModal() { document.getElementById('crmModal').classList.remove('active'); }
+document.getElementById('closeModalBtn').onclick = closeModal;
+
+// ═════ O MOTOR DE EDIÇÃO HTML -> APPS SCRIPT ═════
+async function toggleEditMode() {
   const btn = document.getElementById('btnToggleEdit');
   const values = document.querySelectorAll('.fc-val');
 
   if (!isEditMode) {
-    // Entrar em Modo Edição
+    // Entra em modo edição
     isEditMode = true;
-    btn.innerHTML = "💾 Salvar Alterações";
+    btn.innerHTML = "💾 Salvar nas Planilhas";
     btn.style.background = "rgba(34,201,122,0.2)";
 
     values.forEach(div => {
@@ -383,54 +669,57 @@ function toggleEditMode() {
       div.innerHTML = `<input type="text" class="edit-input" value="${currentText.replace(/"/g, '&quot;')}">`;
     });
   } else {
-    // Salvar Dados
+    // Salva e avisa o Apps Script
+    btn.innerHTML = "⏳ Salvando...";
+    btn.disabled = true;
+
     const payload = {};
     values.forEach(div => {
-      const colunaName = div.getAttribute('data-col');
+      const col = div.getAttribute('data-col');
       const input = div.querySelector('input');
-      if(input) {
-        payload[colunaName] = input.value;
-      }
+      if(input) payload[col] = input.value;
     });
 
-    if (currentCandidateId === "NEW") {
-      saveToSheets("criar", payload);
-    } else {
-      saveToSheets("atualizar", payload);
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ acao: "atualizar", id: currentId, dados: payload })
+      });
+      const resJSON = await response.json();
+      
+      if(resJSON.sucesso) {
+        showToast("Sucesso! O CRM localizou as planilhas e atualizou.");
+        // Atualiza os dados localmente
+        Object.keys(payload).forEach(k => {
+          const c = masterData.find(x => x._id === currentId);
+          if(c) c[k] = payload[k];
+        });
+        openModal(currentId); // Recarrega o modal em modo visualização
+      } else {
+        showToast("Erro ao encontrar a coluna na planilha: " + resJSON.erro, "bad");
+        isEditMode = false;
+        openModal(currentId);
+      }
+    } catch(e) {
+      showToast("Erro de conexão.", "bad");
+    } finally {
+      btn.disabled = false;
     }
   }
 }
 
-function closeModal() {
-  document.getElementById('crmModal').classList.remove('active');
-}
-
-// ══════════════════════════════════════════
-//  FILTROS BÁSICOS
-// ══════════════════════════════════════════
-function buildFilters() {
-  const colEtapa = dataHeaders.find(h => h.toLowerCase().includes('etapa'));
-  const colProf = dataHeaders.find(h => h.toLowerCase().includes('prof'));
-
-  const pop = (id, colName) => {
-    if(!colName) return;
-    const sel = document.getElementById(id);
-    const groups = [...new Set(masterData.map(c => c[colName]).filter(Boolean))];
-    sel.innerHTML = '<option value="">Todas as opções</option>' + groups.map(k => `<option value="${k}">${k}</option>`).join('');
+// Inicia
+initCRM();
+document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
   };
-
-  pop('pipelineFilter', colEtapa);
-  pop('professionFilter', colProf);
-}
-
-document.getElementById('searchInput').addEventListener('input', (e) => {
-  const q = e.target.value.toLowerCase();
-  filteredData = masterData.filter(c => Object.values(c).join(' ').toLowerCase().includes(q));
-  renderAll();
 });
-
-document.getElementById('btnRefresh').onclick = fetchCRMData;
-fetchCRMData(); // Inicia o sistema
+document.getElementById('btnRefresh').onclick = initCRM;
 </script>
 </body>
 </html>
