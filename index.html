@@ -234,8 +234,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,25
 
 <script>
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzYDJUdEEqSzQcTUDXoZmDXpbcpTT-e5bBju6nUEYPLM-vSTssfco3qL6WNP8AuDiMYMw/exec';
+const DEFAULT_API_KEY = '41b391ee15b340f28e382f447ea565c04e21ae78';
 const state = {
-  apiKey: localStorage.getItem('t4_api_key') || '0de161deae65471c9c89ca5f89d54ff2a55410fe',
+  apiKey: (localStorage.getItem('t4_api_key') || localStorage.getItem('talents4_api_key') || DEFAULT_API_KEY).trim(),
   schema: [],
   enums: {},
   candidates: [],
@@ -699,10 +700,7 @@ document.getElementById('newModal').addEventListener('click', e => { if(e.target
 document.getElementById('enumModal').addEventListener('click', e => { if(e.target.id==='enumModal') document.getElementById('enumModal').classList.remove('show'); });
 
 $('#loadBtn').onclick = async () => {
-  if($('#apiKey').value.trim()){
-    state.apiKey = $('#apiKey').value.trim();
-    localStorage.setItem('t4_api_key', state.apiKey);
-  }
+  if($('#apiKey').value.trim()) persistApiKey($('#apiKey').value.trim());
   await loadAll();
   startAutoSync();
   setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.');
@@ -737,25 +735,32 @@ async
 
 let bootStarted = false;
 
+function persistApiKey(key){
+  const normalized = String(key || '').trim();
+  if (!normalized) return '';
+  state.apiKey = normalized;
+  localStorage.setItem('t4_api_key', normalized);
+  localStorage.setItem('talents4_api_key', normalized);
+  const input = document.querySelector('#apiKey');
+  if (input) input.value = normalized;
+  return normalized;
+}
+
 async function safeBoot() {
   if (bootStarted) return;
   bootStarted = true;
 
   try {
     const input = document.querySelector('#apiKey');
-    const savedKey = (localStorage.getItem('t4_api_key') || '').trim();
+    const savedKey = (localStorage.getItem('t4_api_key') || localStorage.getItem('talents4_api_key') || '').trim();
     const fieldKey = (input?.value || '').trim();
-    const resolvedKey = savedKey || fieldKey || state.apiKey || '';
+    const resolvedKey = persistApiKey(savedKey || fieldKey || state.apiKey || DEFAULT_API_KEY || '');
 
     if (!resolvedKey) {
       setStatus('Informe a API key para iniciar.');
       bootStarted = false;
       return;
     }
-
-    state.apiKey = resolvedKey;
-    if (input) input.value = resolvedKey;
-    localStorage.setItem('t4_api_key', resolvedKey);
 
     await loadAll();
     if (typeof startAutoSync === 'function') startAutoSync();
@@ -770,6 +775,8 @@ async function safeBoot() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  persistApiKey(state.apiKey || DEFAULT_API_KEY);
+
   requestAnimationFrame(() => {
     safeBoot();
   });
