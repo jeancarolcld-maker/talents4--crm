@@ -698,7 +698,15 @@ function closeNewModal(){ $('#newModal').classList.remove('show'); }
 document.getElementById('newModal').addEventListener('click', e => { if(e.target.id==='newModal') closeNewModal(); });
 document.getElementById('enumModal').addEventListener('click', e => { if(e.target.id==='enumModal') document.getElementById('enumModal').classList.remove('show'); });
 
-$('#loadBtn').onclick = loadAll;
+$('#loadBtn').onclick = async () => {
+  if($('#apiKey').value.trim()){
+    state.apiKey = $('#apiKey').value.trim();
+    localStorage.setItem('t4_api_key', state.apiKey);
+  }
+  await loadAll();
+  startAutoSync();
+  setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.');
+};
 $('#syncBtn').onclick = async () => {
   try{ setStatus('Executando sincronização...'); await apiPost('sync', { actor:'web-editor' }); await loadAll(); setStatus('Sincronização concluída.'); }
   catch(err){ alert(err.message); setStatus(`Erro no sync: ${err.message}`); }
@@ -719,7 +727,40 @@ $('#q').addEventListener('input', () => refreshList().catch(err => alert(err.mes
 $('#statusFilter').addEventListener('change', () => refreshList().catch(err => alert(err.message)));
 $('#visibilityFilter').addEventListener('change', () => refreshList().catch(err => alert(err.message)));
 
-window.addEventListener('load', () => {
+
+async function autoBoot(){
+  const inputKey = ($('#apiKey')?.value || '').trim();
+  const savedKey = (localStorage.getItem('t4_api_key') || '').trim();
+  const resolvedKey = savedKey || inputKey || state.apiKey || '';
+  if(!resolvedKey){
+    setStatus('Informe a API key para iniciar.');
+    return;
+  }
+  state.apiKey = resolvedKey;
+  $('#apiKey').value = resolvedKey;
+  localStorage.setItem('t4_api_key', resolvedKey);
+  try{
+    await loadAll();
+    startAutoSync();
+    setStatus('Conectado e carregado com sucesso. Sincronização automática ativa.');
+  }catch(err){
+    console.error('autoBoot', err);
+    setStatus(`Erro: ${err.message}`);
+  }
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if(!document.hidden && state.apiKey){
+    try{ await loadAll(); }catch(err){ console.error(err); }
+  }
+});
+window.addEventListener('focus', async () => {
+  if(state.apiKey){
+    try{ await loadAll(); }catch(err){ console.error(err); }
+  }
+});
+
+window.addEventListener('load', async () => {
   if(state.apiKey) $('#apiKey').value = state.apiKey;
 });
 </script>
