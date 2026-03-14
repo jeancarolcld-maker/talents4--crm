@@ -146,7 +146,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,25
       <button class="btn-primary" id="syncBtn">Sincronizar</button>
       <button class="btn-secondary" id="manageEnumsBtn">Listas</button>
     </div>
-    <div class="statusbar" id="statusbar">Inicializando conexão automática...</div>
+    <div class="statusbar" id="statusbar">Inicializando conexão automática. Se demorar mais de alguns segundos, a interface exibirá o erro.</div>
   </section>
 
   <section class="layout">
@@ -358,6 +358,28 @@ function getChipClass(v){
   return 'info';
 }
 
+
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 8000){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    const res = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
+    const text = await res.text();
+    let data;
+    try{
+      data = JSON.parse(text);
+    }catch(_){
+      throw new Error('Resposta inválida da API.');
+    }
+    return data;
+  } catch(err){
+    if(err && err.name === 'AbortError') throw new Error('Tempo limite excedido ao conectar com a API.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function ensureApiKey(){
   const key = $('#apiKey').value.trim();
   if(!key) throw new Error('API key não informada.');
@@ -367,20 +389,18 @@ function ensureApiKey(){
 }
 
 async function apiGet(route, params = {}){
-  const search = new URLSearchParams({ route, key: ensureApiKey(), ...params });
-  const res = await fetch(`${WEBAPP_URL}?${search.toString()}`);
-  const data = await res.json();
+  const search = new URLSearchParams({ route, key: ensureApiKey(), ...params, _ts: Date.now().toString() });
+  const data = await fetchJsonWithTimeout(`${WEBAPP_URL}?${search.toString()}`, {}, 8000);
   if(!data.ok) throw new Error(data.error || 'Erro na API');
   return data;
 }
 
 async function apiPost(action, body = {}){
-  const res = await fetch(WEBAPP_URL, {
+  const data = await fetchJsonWithTimeout(WEBAPP_URL, {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ action, key: ensureApiKey(), ...body })
-  });
-  const data = await res.json();
+  }, 10000);
   if(!data.ok) throw new Error(data.error || 'Erro na API');
   return data;
 }
