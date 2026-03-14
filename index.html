@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Talents4 CRM Control Center</title>
+<title>Talents4 CRM Enterprise Workspace</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -70,6 +70,40 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .notice{margin-top:10px;color:#a8bfdb;font-size:13px;line-height:1.5}
 .statusbar{margin-top:14px;font-size:13px;color:#a9c0de}
+
+.list-scroll{scrollbar-width:thin}
+select{color-scheme:dark;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%, #8fb3da 50%),linear-gradient(135deg,#8fb3da 50%, transparent 50%);background-position:calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px);background-size:6px 6px,6px 6px;background-repeat:no-repeat;padding-right:34px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(88,166,255,.45);box-shadow:0 0 0 3px rgba(88,166,255,.10)}
+.hero{position:relative;overflow:hidden}
+.hero:before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 18%, rgba(124,92,255,.18), transparent 26%),radial-gradient(circle at 12% 0%, rgba(88,166,255,.13), transparent 30%);pointer-events:none}
+.brand,.hero-kpis{position:relative;z-index:1}
+.brand p{max-width:560px}
+.editor-panel{min-height:72vh}
+.panel-head h2{font-size:20px}
+.candidate .meta div:last-child{color:#9cc0e6}
+.candidate .top{align-items:flex-start}
+.field label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.field label .field-tag{font-size:10px;color:#6f89ab;font-weight:700;letter-spacing:.04em}
+.custom-select{position:relative}
+.custom-select .native-select{position:absolute;opacity:0;pointer-events:none;inset:0}
+.custom-trigger{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;color:var(--text);padding:11px 13px;font:inherit;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;cursor:pointer}
+.custom-trigger:after{content:'▾';color:#9ec3ec;font-size:13px}
+.custom-menu{position:absolute;left:0;right:0;top:calc(100% + 8px);background:#0d1c32;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:8px;display:none;max-height:280px;overflow:auto;box-shadow:0 28px 48px rgba(0,0,0,.45);z-index:120}
+.custom-select.open .custom-menu{display:block}
+.custom-option{padding:10px 12px;border-radius:10px;color:#dce9fa;cursor:pointer;font-size:14px}
+.custom-option:hover,.custom-option.active{background:rgba(88,166,255,.14);color:#fff}
+.custom-option.muted{color:#7e97b8}
+.enum-row{display:grid;grid-template-columns:1.2fr .9fr auto auto;gap:10px;align-items:end;margin-bottom:12px}
+.enum-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.enum-chip{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:12px;color:#d5e6fb}
+.enum-chip button{margin-left:8px;padding:0;background:none;border:none;color:#ffb1b1;font-size:12px;cursor:pointer}
+.section-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 10px}
+.section-toolbar .section-title{margin:0}
+.status-row .chip{font-size:13px;text-transform:none}
+.chip.good,.chip.bad,.chip.warn,.chip.info{letter-spacing:0}
+.notice{margin-top:10px;color:#a8bfdb;font-size:13px;line-height:1.5}
+@media(max-width:760px){.enum-row{grid-template-columns:1fr}}
+
 @media(max-width:1180px){.hero{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.toolbar-grid{grid-template-columns:1fr 1fr}.editor-panel{order:-1}}
 @media(max-width:760px){.toolbar-grid,.form-grid,.modal-grid,.hero-kpis{grid-template-columns:1fr}}
 </style>
@@ -78,9 +112,9 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
 <div class="container">
   <section class="hero">
     <div class="brand">
-      <small>TALENTS4 CRM CONTROL CENTER</small>
-      <h1>Operação editável, centralizada e pronta para escala.</h1>
-      <p>Este painel deixa de ser só dashboard. Aqui você cria candidatos, edita status, altera campos de todas as etapas, inativa registros e controla o que aparece ou não na visão executiva.</p>
+      <small>TALENTS4 • CRM ENTERPRISE WORKSPACE</small>
+      <h1>Talents4 Candidate Workspace</h1>
+      <p>Base operacional, edição completa e leitura executiva em um único ambiente.</p>
     </div>
     <div class="hero-kpis" id="heroMetrics"></div>
   </section>
@@ -110,6 +144,7 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
       <button class="btn-secondary" id="loadBtn">Carregar</button>
       <button class="btn-good" id="newBtn">Novo candidato</button>
       <button class="btn-primary" id="syncBtn">Sincronizar</button>
+      <button class="btn-secondary" id="manageEnumsBtn">Listas</button>
     </div>
     <div class="statusbar" id="statusbar">Aguardando conexão.</div>
   </section>
@@ -119,7 +154,7 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
       <div class="panel-head">
         <div>
           <h2>Base operacional</h2>
-          <p>Selecione um candidato para editar tudo em um único lugar.</p>
+          <p>Selecione um candidato para abrir a ficha operacional completa.</p>
         </div>
         <span class="small-pill" id="listCount">0 registros</span>
       </div>
@@ -144,7 +179,7 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
             <button class="btn-secondary" id="reloadCandidateBtn">Recarregar</button>
             <button class="btn-bad" id="toggleActiveBtn">Inativar</button>
           </div>
-          <div class="notice">Regra operacional: inativar um candidato marca <strong>Ativo = FALSE</strong>, <strong>Ocultar Dashboard = TRUE</strong> e o retira da visão executiva.</div>
+          <div class="notice" id="editorHint">Alterações salvas neste editor alimentam a operação e as métricas do painel.</div>
         </div>
       </div>
     </div>
@@ -156,7 +191,7 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
     <div class="panel-head">
       <div>
         <h2>Criar novo candidato</h2>
-        <p>O backend cria o ID automaticamente e replica o registro para todas as etapas.</p>
+        <p>O ID é gerado automaticamente e o registro entra no fluxo operacional.</p>
       </div>
       <button class="btn-secondary" id="closeModalBtn">Fechar</button>
     </div>
@@ -176,10 +211,31 @@ button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:70
   </div>
 </div>
 
+
+<div class="overlay" id="enumModal">
+  <div class="modal-card">
+    <div class="panel-head">
+      <div>
+        <h2>Gerenciar listas</h2>
+        <p>Adicione ou remova opções usadas nos campos selecionáveis.</p>
+      </div>
+      <button class="btn-secondary" id="closeEnumModalBtn">Fechar</button>
+    </div>
+    <div class="enum-row">
+      <div class="field"><label>Lista</label><select id="enumFieldSelect"></select></div>
+      <div class="field"><label>Nova opção</label><input id="enumNewValue" placeholder="Ex.: Entrevista técnica" /></div>
+      <button class="btn-good" id="addEnumBtn">Adicionar</button>
+      <button class="btn-secondary" id="refreshEnumsBtn">Atualizar</button>
+    </div>
+    <div class="notice">As novas opções entram automaticamente nos formulários e, depois do salvamento, passam a refletir nas métricas.</div>
+    <div id="enumList" class="enum-list"></div>
+  </div>
+</div>
+
 <script>
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzYDJUdEEqSzQcTUDXoZmDXpbcpTT-e5bBju6nUEYPLM-vSTssfco3qL6WNP8AuDiMYMw/exec';
 const state = {
-  apiKey: localStorage.getItem('t4_api_key') || '',
+  apiKey: localStorage.getItem('t4_api_key') || '0de161deae65471c9c89ca5f89d54ff2a55410fe',
   schema: [],
   enums: {},
   candidates: [],
@@ -189,6 +245,68 @@ const sectionOrder = ['Master','Cadastro & Triagem','Entrevista Pessoal','Entrev
 
 const $ = sel => document.querySelector(sel);
 const statusbar = $('#statusbar');
+
+
+function prettyFieldLabel(label){
+  return String(label||'').replace(/\?/g,'').replace(/\s+/g,' ').trim();
+}
+function fieldTag(field){
+  const f = String(field||'').toLowerCase();
+  if(f.includes('status')) return 'lista';
+  if(f.includes('ativo') || f.includes('ocultar')) return 'controle';
+  if(f.includes('email') || f.includes('telefone')) return 'cadastro';
+  return '';
+}
+function closeAllCustomSelects(except){
+  document.querySelectorAll('.custom-select.open').forEach(el => { if(el !== except) el.classList.remove('open'); });
+}
+function enhanceSelects(root = document){
+  if(!root) return;
+  root.querySelectorAll('select').forEach(select => {
+    if(select.dataset.enhanced === '1') return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select';
+    const native = select.cloneNode(true);
+    native.classList.add('native-select');
+    native.dataset.enhanced = '1';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-trigger';
+    const menu = document.createElement('div');
+    menu.className = 'custom-menu';
+    const sync = () => {
+      const current = native.value;
+      const currentText = native.options[native.selectedIndex]?.text || 'Selecionar';
+      trigger.textContent = currentText || 'Selecionar';
+      menu.innerHTML = '';
+      [...native.options].forEach(opt => {
+        const item = document.createElement('div');
+        item.className = 'custom-option' + (opt.value === current ? ' active' : '') + (!opt.value ? ' muted' : '');
+        item.textContent = opt.text || 'Selecionar';
+        item.onclick = () => {
+          native.value = opt.value;
+          select.value = opt.value;
+          select.dispatchEvent(new Event('change', { bubbles:true }));
+          sync();
+          wrapper.classList.remove('open');
+        };
+        menu.appendChild(item);
+      });
+    };
+    trigger.onclick = () => {
+      const willOpen = !wrapper.classList.contains('open');
+      closeAllCustomSelects(wrapper);
+      wrapper.classList.toggle('open', willOpen);
+    };
+    native.onchange = () => { select.value = native.value; sync(); };
+    sync();
+    wrapper.appendChild(native); wrapper.appendChild(trigger); wrapper.appendChild(menu);
+    select.style.display = 'none';
+    select.after(wrapper);
+    select.dataset.enhanced = '1';
+  });
+}
+document.addEventListener('click', e => { if(!e.target.closest('.custom-select')) closeAllCustomSelects(); });
 
 function setStatus(msg){ statusbar.textContent = msg; }
 
@@ -229,10 +347,10 @@ async function apiPost(action, body = {}){
 
 function renderHero(metrics){
   const cards = [
-    ['Base ativa', metrics.total, 'Registros visíveis no dashboard'],
-    ['Aprovados', metrics.aprovados, 'Prontos ou aprovados em alguma etapa'],
-    ['B1+', metrics.b1Plus, 'Base com idioma operacional'],
-    ['Pendências docs', metrics.pendentesDocs, 'Passaporte ou documento profissional faltando']
+    ['Base ativa', metrics.total, 'Registros visíveis no painel'],
+    ['Aprovados', metrics.aprovados, 'Com avanço confirmado ou alta aderência'],
+    ['B1+', metrics.b1Plus, 'Prontidão linguística operacional'],
+    ['Pendências críticas', metrics.pendentesDocs, 'Passaporte ou licença pendente']
   ];
   $('#heroMetrics').innerHTML = cards.map(([label,val,sub]) => `
     <div class="metric">
@@ -275,9 +393,12 @@ function fieldInput(field, candidate){
     return `<select data-field="${escapeHtml(field.field)}">${buildSelectOptions(field.options || [], value)}</select>`;
   }
   if(field.type === 'boolean'){
+    const f = String(field.field||'').toLowerCase();
+    const trueLabel = f.includes('ocultar') ? 'Oculto' : (f.includes('ativo') ? 'Ativo' : 'Sim');
+    const falseLabel = f.includes('ocultar') ? 'Visível' : (f.includes('ativo') ? 'Inativo' : 'Não');
     return `<select data-field="${escapeHtml(field.field)}">
-      <option value="TRUE" ${String(value).toUpperCase()==='TRUE'?'selected':''}>TRUE</option>
-      <option value="FALSE" ${String(value).toUpperCase()==='FALSE'?'selected':''}>FALSE</option>
+      <option value="TRUE" ${String(value).toUpperCase()==='TRUE'?'selected':''}>${trueLabel}</option>
+      <option value="FALSE" ${String(value).toUpperCase()==='FALSE'?'selected':''}>${falseLabel}</option>
     </select>`;
   }
   if(field.field.toLowerCase().includes('resumo') || field.field.toLowerCase().includes('análise') || field.field.toLowerCase().includes('observa') || field.field.toLowerCase().includes('relato') || field.field.toLowerCase().includes('porque')){
@@ -298,9 +419,9 @@ function renderEditor(candidate){
   const chips = [
     ['Status', candidate.status],
     ['Substatus', candidate.substatus],
-    ['Ativo', candidate.ativo === false ? 'FALSE' : 'TRUE'],
-    ['Ocultar', candidate.ocultarDashboard ? 'TRUE' : 'FALSE'],
-    ['Alemão', candidate['Nível de alemão'] || candidate['Nível na língua alemã?']]
+    ['Ativo', candidate.ativo === false ? 'Inativo' : 'Ativo'],
+    ['Dashboard', candidate.ocultarDashboard ? 'Oculto' : 'Visível'],
+    ['Alemão', candidate['Nível de alemão'] || candidate['Nível na língua alemã?'] || 'Não informado']
   ].filter(x => x[1] !== undefined && x[1] !== '');
   $('#editorChips').innerHTML = chips.map(([l,v])=>`<span class="chip ${getChipClass(v)}">${escapeHtml(l)}: ${escapeHtml(String(v))}</span>`).join('');
 
@@ -313,17 +434,18 @@ function renderEditor(candidate){
 
   $('#sectionsContainer').innerHTML = sectionOrder.filter(sec => bySection[sec]?.length).map(sec => `
     <div class="section">
-      <h3 class="section-title">${escapeHtml(sec)}</h3>
+      <div class="section-toolbar"><h3 class="section-title">${escapeHtml(sec)}</h3></div>
       <div class="form-grid">
         ${bySection[sec].map(f => `
           <div class="${textareaField(f.field)?'full':''}">
             <div class="field">
-              <label>${escapeHtml(f.label)}</label>
+              <label>${escapeHtml(prettyFieldLabel(f.label))}${fieldTag(f.field)?`<span class="field-tag">${escapeHtml(fieldTag(f.field))}</span>`:''}</label>
               ${fieldInput(f, candidate)}
             </div>
           </div>`).join('')}
       </div>
     </div>`).join('');
+  enhanceSelects($('#sectionsContainer'));
 }
 
 function textareaField(name){
@@ -374,6 +496,56 @@ function hydrateFilters(){
   $('#newSubstatus').innerHTML = buildSelectOptions(state.enums['Substatus'] || [], 'Sem contato');
   const statusOptions = ['<option value="">Todos</option>'].concat((state.enums['STATUS PIPELINE'] || []).map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
   $('#statusFilter').innerHTML = statusOptions.join('');
+  const enumFields = Object.keys(state.enums).sort();
+  $('#enumFieldSelect').innerHTML = enumFields.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+  renderEnumManager();
+  enhanceSelects(document.querySelector('.toolbar'));
+  enhanceSelects(document.querySelector('#newModal'));
+  enhanceSelects(document.querySelector('#enumModal'));
+}
+
+
+async function addEnumOption(field, value){
+  return apiPost('upsertEnumOption', { field, value });
+}
+async function removeEnumOption(field, value){
+  return apiPost('removeEnumOption', { field, value });
+}
+function renderEnumManager(){
+  const field = $('#enumFieldSelect')?.value || Object.keys(state.enums)[0] || '';
+  const list = state.enums[field] || [];
+  $('#enumList').innerHTML = list.length
+    ? list.map(v => `<span class="enum-chip">${escapeHtml(v)} <button type="button" data-remove-enum="${escapeHtml(v)}">×</button></span>`).join('')
+    : '<div class="empty" style="min-height:120px">Nenhuma opção cadastrada.</div>';
+  document.querySelectorAll('[data-remove-enum]').forEach(btn => btn.onclick = async () => {
+    const value = btn.dataset.removeEnum;
+    const targetField = $('#enumFieldSelect').value;
+    if(!confirm(`Remover "${value}" de ${targetField}?`)) return;
+    try{
+      setStatus('Removendo opção da lista...');
+      await removeEnumOption(targetField, value);
+      const schemaData = await apiGet('schema');
+      state.schema = schemaData.schema || [];
+      state.enums = schemaData.enums || {};
+      hydrateFilters();
+      setStatus('Lista atualizada.');
+    }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); }
+  });
+}
+async function saveEnumOption(){
+  const field = $('#enumFieldSelect').value;
+  const value = $('#enumNewValue').value.trim();
+  if(!field || !value) return;
+  try{
+    setStatus('Adicionando opção à lista...');
+    await addEnumOption(field, value);
+    $('#enumNewValue').value = '';
+    const schemaData = await apiGet('schema');
+    state.schema = schemaData.schema || [];
+    state.enums = schemaData.enums || {};
+    hydrateFilters();
+    setStatus('Nova opção disponível no editor.');
+  }catch(err){ alert(err.message); setStatus(`Erro: ${err.message}`); }
 }
 
 async function openCandidate(id, fetchRemote = true){
@@ -463,6 +635,8 @@ function escapeHtml(v){
   return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function closeNewModal(){ $('#newModal').classList.remove('show'); }
+document.getElementById('newModal').addEventListener('click', e => { if(e.target.id==='newModal') closeNewModal(); });
+document.getElementById('enumModal').addEventListener('click', e => { if(e.target.id==='enumModal') document.getElementById('enumModal').classList.remove('show'); });
 
 $('#loadBtn').onclick = loadAll;
 $('#syncBtn').onclick = async () => {
@@ -476,6 +650,11 @@ $('#newBtn').onclick = () => $('#newModal').classList.add('show');
 $('#closeModalBtn').onclick = closeNewModal;
 $('#cancelCreateBtn').onclick = closeNewModal;
 $('#createBtn').onclick = createCandidate;
+$('#manageEnumsBtn').onclick = () => $('#enumModal').classList.add('show');
+$('#closeEnumModalBtn').onclick = () => $('#enumModal').classList.remove('show');
+$('#refreshEnumsBtn').onclick = async () => { const schemaData = await apiGet('schema'); state.schema = schemaData.schema || []; state.enums = schemaData.enums || {}; hydrateFilters(); setStatus('Listas recarregadas.'); };
+$('#addEnumBtn').onclick = saveEnumOption;
+$('#enumFieldSelect').addEventListener('change', renderEnumManager);
 $('#q').addEventListener('input', () => refreshList().catch(err => alert(err.message)));
 $('#statusFilter').addEventListener('change', () => refreshList().catch(err => alert(err.message)));
 $('#visibilityFilter').addEventListener('change', () => refreshList().catch(err => alert(err.message)));
