@@ -241,7 +241,7 @@ const state = {
   candidates: [],
   currentId: null,
   lastSyncAt: null,
-  autoSyncMs: 60000,
+  autoSyncMs: 15000,
   autoSyncHandle: null
 };
 const sectionOrder = ['Master','Cadastro & Triagem','Entrevista Pessoal','Entrevista Avaliação','Análise RH','Documentação','Jurídico','Empregador'];
@@ -312,6 +312,13 @@ function enhanceSelects(root = document){
 document.addEventListener('click', e => { if(!e.target.closest('.custom-select')) closeAllCustomSelects(); });
 
 
+
+function refreshAutoSyncBadge(){
+  const el = document.getElementById('autoSyncBadge');
+  if(!el) return;
+  el.textContent = `Auto-sync ativo • intervalo ${Math.round(state.autoSyncMs/1000)}s`;
+}
+
 function markSynced(){
   state.lastSyncAt = new Date();
   const el = document.getElementById('lastSyncBadge');
@@ -329,6 +336,7 @@ async function fullReload(showStatus = true){
 }
 function startAutoSync(){
   if(state.autoSyncHandle) clearInterval(state.autoSyncHandle);
+  refreshAutoSyncBadge();
   state.autoSyncHandle = setInterval(async () => {
     if(document.hidden) return;
     try{
