@@ -239,7 +239,10 @@ const state = {
   schema: [],
   enums: {},
   candidates: [],
-  currentId: null
+  currentId: null,
+  lastSyncAt: null,
+  autoSyncMs: 60000,
+  autoSyncHandle: null
 };
 const sectionOrder = ['Master','Cadastro & Triagem','Entrevista Pessoal','Entrevista Avaliação','Análise RH','Documentação','Jurídico','Empregador'];
 
@@ -308,6 +311,35 @@ function enhanceSelects(root = document){
 }
 document.addEventListener('click', e => { if(!e.target.closest('.custom-select')) closeAllCustomSelects(); });
 
+
+function markSynced(){
+  state.lastSyncAt = new Date();
+  const el = document.getElementById('lastSyncBadge');
+  if(el) el.textContent = `Última atualização ${state.lastSyncAt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
+}
+async function fullReload(showStatus = true){
+  if(showStatus) setStatus('Sincronizando base...');
+  const schemaData = await apiGet('schema');
+  state.schema = schemaData.schema || [];
+  state.enums = schemaData.enums || {};
+  hydrateFilters();
+  await refreshList(false);
+  markSynced();
+  if(showStatus) setStatus('Base atualizada.');
+}
+function startAutoSync(){
+  if(state.autoSyncHandle) clearInterval(state.autoSyncHandle);
+  state.autoSyncHandle = setInterval(async () => {
+    if(document.hidden) return;
+    try{
+      await fullReload(false);
+    }catch(err){
+      console.error('AutoSync error', err);
+      setStatus(`Erro no sync: ${err.message}`);
+    }
+  }, state.autoSyncMs);
+}
+
 function setStatus(msg){ statusbar.textContent = msg; }
 
 function getChipClass(v){
@@ -337,7 +369,7 @@ async function apiGet(route, params = {}){
 async function apiPost(action, body = {}){
   const res = await fetch(WEBAPP_URL, {
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ action, key: ensureApiKey(), ...body })
   });
   const data = await res.json();
