@@ -856,7 +856,7 @@ function renderView() {
     case 'candidates':   renderTable(el, null);             break;
     case 'triagem':      renderTable(el, '__triagem');       break;
     case 'entrevistas':  renderTable(el, '__entrevistas');   break;
-    case 'analise':      renderTable(el, 'Análise RH');      break;
+    case 'analise':      renderTable(el, '__analise');        break;
     case 'alemao':       renderTable(el, 'Curso de alemão'); break;
     case 'documentacao': renderTable(el, 'Documentação');    break;
     case 'employer':     renderTable(el, '__employer');      break;
@@ -924,7 +924,14 @@ function renderDashboard(el) {
   const semAlemao     = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a || a==='Nenhum'; }).length;
   const triagem       = ativos.filter(c => ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE')));
   const entrevista    = ativos.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(fv(c,'STATUS PIPELINE')));
-  const analise       = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Análise RH');
+  const entrevistaData = cands.filter(c =>
+    (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() ||
+    (fv(c,'Data da Entrevista','Data entrevista')||'').trim()
+  );
+  const analiseData = cands.filter(c =>
+    (fv(c,'Análise do recrutador','Análise recrutador')||'').trim() ||
+    (fv(c,'Pontos fortes')||'').trim()
+  );
   const cursoAlemao   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Curso de alemão');
   const docStage      = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Documentação');
   const employerS     = ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE')));
@@ -962,12 +969,12 @@ function renderDashboard(el) {
 
   // ── AGING BLOCKS — estágios reais ──
   const agingStages = [
-    { label:'Triagem / Novo',   list:triagem,      color:'#38bdf8' },
-    { label:'Entrevistas',      list:entrevista,   color:'#c084fc' },
-    { label:'Análise RH',       list:analise,      color:'#f5c84a' },
-    { label:'Curso de Alemão',  list:cursoAlemao,  color:'#ff8c42' },
-    { label:'Documentação',     list:docStage,     color:'#1de99b' },
-    { label:'Employer/Matching',list:employerS,    color:'#2dd4bf' },
+    { label:'Triagem / Novo',   list:triagem,        color:'#38bdf8' },
+    { label:'Entrevistados',    list:entrevistaData, color:'#c084fc' },
+    { label:'Análise RH',       list:analiseData,    color:'#f5c84a' },
+    { label:'Curso de Alemão',  list:cursoAlemao,    color:'#ff8c42' },
+    { label:'Documentação',     list:docStage,       color:'#1de99b' },
+    { label:'Employer/Matching',list:employerS,      color:'#2dd4bf' },
   ];
 
   const agingHtml = agingStages.map(ag => {
@@ -1025,8 +1032,10 @@ function renderDashboard(el) {
       { lbl:'Sem responsável', val:noRespCount(triagem), color:'var(--yellow)', cls:'warn' },
       { lbl:'>15 dias parado', val:agingBands(triagem,'STATUS PIPELINE','Data entrada etapa atual')[2]+agingBands(triagem,'STATUS PIPELINE','Data entrada etapa atual')[3], color:'var(--red)', cls:'risk' },
     ]),
-    smartCard('Em Entrevista', entrevista.length, '1ª ou 2ª entrevista', 'mc-purple', [
-      { lbl:'Sem avaliador', val:entrevista.filter(c=>!fv(c,'Avaliador')).length, color:'var(--yellow)', cls:'warn' },
+    smartCard('Em Entrevista', entrevistaData.length, 'com dados de entrevista', 'mc-purple', [
+      { lbl:'Classificados',    val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Classificado').length,    color:'var(--green)',  cls:'ok'   },
+      { lbl:'Não classificados',val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Não classificado').length, color:'var(--red)',    cls:'risk' },
+      { lbl:'Em análise',       val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Em análise').length,       color:'var(--yellow)', cls:'warn' },
     ]),
     smartCard('Curso de Alemão', cursoAlemao.length, 'em preparação linguística', 'mc-orange', [
       { lbl:'A0 (iniciantes)', val:cursoAlemao.filter(c=>fv(c,'Nível de alemão','Nível alemão')==='A0').length, color:'var(--orange)', cls:'warn' },
@@ -1048,8 +1057,8 @@ function renderDashboard(el) {
     smartCard('Doc. Completa', ativos.filter(c=>isYes(fv(c,'Documentação completa'))).length, 'documentação 100%', 'mc-blue', [
       { lbl:'Pendência crítica', val:pendCritica, color:'var(--red)', cls:'risk' },
     ]),
-    smartCard('Análise RH', analise.length, 'em avaliação RH', 'mc-yellow', [
-      { lbl:'Sem avaliador RH', val:analise.filter(c=>!fv(c,'Avaliador')).length, color:'var(--yellow)', cls:'warn' },
+    smartCard('Análise RH', analiseData.length, 'com análise preenchida', 'mc-yellow', [
+      { lbl:'Sem avaliador RH', val:analiseData.filter(c=>!fv(c,'Avaliador')).length, color:'var(--yellow)', cls:'warn' },
     ]),
     smartCard('Não Qualificados', naoQualif, 'base de dados', 'mc-orange', [
       { lbl:'Desistências', val:desistiu, color:'var(--txt3)', cls:'' },
@@ -1304,17 +1313,55 @@ function kanbanCard(c) {
 // TABLE VIEW
 // ══════════════════════════════════════════════════════════════
 function renderTable(el, filterStatus) {
-  // Sempre começa dos candidatos ativos (sem inativos)
-  let list = filterCands(S.candidates, false);
+  // Para Entrevistas e Análise RH: filtra por dado preenchido, não por status atual
+  // (candidatos avançam de etapa mas seus dados históricos devem ser visíveis)
+  let list;
 
-  if (filterStatus === '__triagem') {
-    list = list.filter(c => ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE')));
-  } else if (filterStatus === '__entrevistas') {
-    list = list.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(fv(c,'STATUS PIPELINE')));
+  if (filterStatus === '__entrevistas') {
+    // Mostra todos que têm dados de entrevista preenchidos (independente do status atual)
+    list = S.candidates.filter(c =>
+      (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() ||
+      (fv(c,'Data da Entrevista','Data entrevista')||'').trim() ||
+      (fv(c,'Avaliador')||'').trim()
+    );
+  } else if (filterStatus === '__analise') {
+    // Mostra todos que têm dados de Análise RH preenchidos
+    list = S.candidates.filter(c =>
+      (fv(c,'Análise do recrutador','Análise recrutador')||'').trim() ||
+      (fv(c,'Pontos fortes')||'').trim() ||
+      (fv(c,'Diferenciais do perfil','Diferenciais')||'').trim()
+    );
+  } else if (filterStatus === '__triagem') {
+    list = filterCands(S.candidates, false).filter(c =>
+      ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE'))
+    );
   } else if (filterStatus === '__employer') {
-    list = list.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE')));
+    list = filterCands(S.candidates, false).filter(c =>
+      ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE'))
+    );
   } else if (filterStatus) {
-    list = list.filter(c => fv(c,'STATUS PIPELINE') === filterStatus);
+    list = filterCands(S.candidates, false).filter(c =>
+      fv(c,'STATUS PIPELINE') === filterStatus
+    );
+  } else {
+    list = filterCands(S.candidates, false);
+  }
+
+  // Aplica filtros de coluna adicionais (alemão, perfil, etc.)
+  if (S.filter.perfil)    list = list.filter(c => fv(c,'Perfil') === S.filter.perfil);
+  if (S.filter.profissao) list = list.filter(c => fv(c,'Profissão principal','Profissão') === S.filter.profissao);
+  if (S.filter.alemao)    list = list.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
+  if (S.filter.empregador === '__filled__') list = list.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim());
+  else if (S.filter.empregador) list = list.filter(c => fv(c,'Hospital alvo','Empresa / Empregador') === S.filter.empregador);
+  if (S.filter.status)    list = list.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
+  if (S.filter.q) {
+    const q = S.filter.q.toLowerCase();
+    list = list.filter(c =>
+      (fv(c,'Nome completo')||'').toLowerCase().includes(q) ||
+      (fv(c,'Profissão principal','Profissão')||'').toLowerCase().includes(q) ||
+      (fv(c,'E-mail')||'').toLowerCase().includes(q) ||
+      (fv(c,'Cidade atual')||'').toLowerCase().includes(q) ||
+      (c.ID||'').toLowerCase().includes(q));
   }
 
   const total  = list.length;
@@ -1345,32 +1392,97 @@ function renderTable(el, filterStatus) {
     <select class="filter-select" onchange="setFilter('profissao',this.value)">
       ${profissaoOpts.map(p=>`<option value="${esc(p)}" ${S.filter.profissao===p?'selected':''}>${p||'Profissão (todas)'}</option>`).join('')}
     </select>
-    <select class="filter-select" onchange="setFilter('empregador',this.value)">
-      <option value="" ${S.filter.empregador===''?'selected':''}>Empresa (todos)</option>
-      <option value="__filled__" ${S.filter.empregador==='__filled__'?'selected':''}>Com empresa vinculada</option>
-      ${empregadorOpts.filter(Boolean).map(p=>`<option value="${esc(p)}" ${S.filter.empregador===p?'selected':''}>${p}</option>`).join('')}
-    </select>
   </div>`;
 
-  const rows = paged.map(c => {
-    const st=c['STATUS PIPELINE']||'';
-    const sc=STATUS_BADGE[st]||'b-inativo';
-    const pf=c['Perfil']||'';
-    const pfc=PERFIL_BADGE[pf]||'';
-    const al=fv(c,'Nível de alemão','Nível alemão')||'';
-    const alc=ALEMAO_COLORS[al]||'var(--txt3)';
-    return `<tr onclick="openCand('${esc(c.ID)}')">
-      <td class="td-name">${esc(c['Nome completo']||'—')}</td>
-      <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
-      <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
-      <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
-      <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
-      <td>${esc(fv(c,'Cidade atual')||'—')}</td>
-      <td>${esc(fv(c,'Avaliador','Responsável interno')||'—')}</td>
-      <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
-      <td class="td-id">${esc(c.ID||'—')}</td>
+  // Colunas variam por aba
+  let thead, rows;
+
+  if (filterStatus === '__entrevistas') {
+    // ─── ABA ENTREVISTAS: colunas específicas de entrevista ───
+    thead = `<tr>
+      <th>Nome</th><th>Status Atual</th><th>Resultado</th><th>Data Entrevista</th>
+      <th>Avaliador</th><th>Perfil</th><th>Alemão</th><th>Profissão</th><th>Score</th>
     </tr>`;
-  }).join('');
+    rows = paged.map(c => {
+      const st  = fv(c,'STATUS PIPELINE')||'';
+      const sc  = STATUS_BADGE[st]||'b-inativo';
+      const res = fv(c,'Resultado entrevista','Resultado da entrevista')||'';
+      const resCls = res==='Classificado'?'color:var(--green)':res==='Não classificado'?'color:var(--red)':'color:var(--yellow)';
+      const pf  = fv(c,'Perfil')||'';
+      const pfc = PERFIL_BADGE[pf]||'';
+      const al  = fv(c,'Nível de alemão','Nível alemão')||'';
+      const alc = ALEMAO_COLORS[al]||'var(--txt3)';
+      const dt  = fv(c,'Data da Entrevista','Data entrevista')||'';
+      const dtFmt = dt ? dt.substring(0,10) : '—';
+      return `<tr onclick="openCand('${esc(c.ID)}')">
+        <td class="td-name">${esc(c['Nome completo']||'—')}</td>
+        <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
+        <td><span style="font-weight:600;font-size:12px;${resCls}">${esc(res)||'—'}</span></td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--txt3)">${dtFmt}</td>
+        <td>${esc(fv(c,'Avaliador')||'—')}</td>
+        <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
+        <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
+        <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
+        <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
+      </tr>`;
+    }).join('');
+
+  } else if (filterStatus === '__analise') {
+    // ─── ABA ANÁLISE RH: colunas específicas de análise ───
+    thead = `<tr>
+      <th>Nome</th><th>Status Atual</th><th>Perfil</th><th>Tipo</th>
+      <th>Avaliador</th><th>Pontos Fortes</th><th>Pontos Atenção</th><th>Alemão</th><th>Score</th>
+    </tr>`;
+    rows = paged.map(c => {
+      const st   = fv(c,'STATUS PIPELINE')||'';
+      const sc   = STATUS_BADGE[st]||'b-inativo';
+      const pf   = fv(c,'Perfil')||'';
+      const pfc  = PERFIL_BADGE[pf]||'';
+      const tipo = fv(c,'Tipo de candidato','Tipo candidato')||'—';
+      const av   = fv(c,'Avaliador')||'—';
+      const al   = fv(c,'Nível de alemão','Nível alemão')||'';
+      const alc  = ALEMAO_COLORS[al]||'var(--txt3)';
+      const fortes = fv(c,'Pontos fortes')||'—';
+      const atencao= fv(c,'Pontos de atenção')||'—';
+      const truncate = (s,n) => s.length > n ? s.substring(0,n)+'…' : s;
+      return `<tr onclick="openCand('${esc(c.ID)}')">
+        <td class="td-name">${esc(c['Nome completo']||'—')}</td>
+        <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
+        <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
+        <td style="font-size:11px;color:var(--txt3)">${esc(tipo)}</td>
+        <td>${esc(av)}</td>
+        <td style="font-size:11.5px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(truncate(fortes,60))}</td>
+        <td style="font-size:11.5px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--yellow)">${esc(truncate(atencao,50))}</td>
+        <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
+        <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
+      </tr>`;
+    }).join('');
+
+  } else {
+    // ─── TABELA PADRÃO ───
+    thead = `<tr><th>Nome</th><th>Status Pipeline</th><th>Perfil</th><th>Alemão</th><th>Profissão</th><th>Cidade</th><th>Avaliador</th><th>Score</th><th>ID</th></tr>`;
+    rows = paged.map(c => {
+      const st=c['STATUS PIPELINE']||'';
+      const sc=STATUS_BADGE[st]||'b-inativo';
+      const pf=c['Perfil']||'';
+      const pfc=PERFIL_BADGE[pf]||'';
+      const al=fv(c,'Nível de alemão','Nível alemão')||'';
+      const alc=ALEMAO_COLORS[al]||'var(--txt3)';
+      return `<tr onclick="openCand('${esc(c.ID)}')">
+        <td class="td-name">${esc(c['Nome completo']||'—')}</td>
+        <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
+        <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
+        <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
+        <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
+        <td>${esc(fv(c,'Cidade atual')||'—')}</td>
+        <td>${esc(fv(c,'Avaliador','Responsável interno')||'—')}</td>
+        <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
+        <td class="td-id">${esc(c.ID||'—')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const colCount = filterStatus === '__entrevistas' ? 9 : filterStatus === '__analise' ? 9 : 9;
 
   const pg = pages > 1 ? `<div class="pagination">
     <button class="pg-btn" onclick="setPage(${S.page-1})" ${S.page===1?'disabled':''}>‹</button>
@@ -1385,8 +1497,8 @@ function renderTable(el, filterStatus) {
   el.innerHTML = `${filterBar}
     <div class="tbl-wrap">
       <table class="data-tbl">
-        <thead><tr><th>Nome</th><th>Status Pipeline</th><th>Perfil</th><th>Alemão</th><th>Profissão</th><th>Cidade</th><th>Avaliador</th><th>Score</th><th>ID</th></tr></thead>
-        <tbody>${rows||'<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--txt3)">Nenhum resultado</td></tr>'}</tbody>
+        <thead>${thead}</thead>
+        <tbody>${rows||`<tr><td colspan="${colCount}" style="text-align:center;padding:40px;color:var(--txt3)">Nenhum resultado</td></tr>`}</tbody>
       </table>
     </div>${pg}`;
 }
