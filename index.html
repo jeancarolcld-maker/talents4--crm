@@ -331,7 +331,7 @@ a{color:inherit;text-decoration:none}
 <body>
 
 <!-- ════════════════════ LOGIN ════════════════════ -->
-<div id="login-screen">
+<div id="login-screen" style="display:none">
   <div class="login-card">
     <div class="login-logo">
       <div class="login-logo-icon">T4</div>
@@ -350,12 +350,12 @@ a{color:inherit;text-decoration:none}
     </div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()" id="li-btn">Entrar</button>
     <div class="login-err" id="li-err">Usuário ou senha incorretos.</div>
-    <div class="login-footer">T4 Operations v6.5 · Login via backend</div>
+    <div class="login-footer">T4 Operations v6.7 · Acesso direto provisório</div>
   </div>
 </div>
 
 <!-- ════════════════════ APP ════════════════════ -->
-<div id="app" style="display:none">
+<div id="app" style="display:flex">
   <nav id="sidebar">
     <div class="logo">
       <div class="logo-icon">T4</div>
@@ -565,53 +565,29 @@ async function doLogin() {
   const user = document.getElementById('li-user').value.trim();
   const pass = document.getElementById('li-pass').value;
   const err  = document.getElementById('li-err');
-  const btn  = document.getElementById('li-btn');
   err.style.display = 'none';
-  if (!user || !pass) {
-    err.textContent = 'Preencha usuário e senha.';
-    err.style.display = 'block';
-    return;
-  }
-  const oldText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Entrando...';
   try {
     let users = [];
-    try {
-      users = await fetchUsersForAuth();
-    } catch (e) {
-      console.warn('Falha ao obter usuários do backend no login:', e);
-    }
+    try { users = await fetchUsersForAuth(); } catch(_) {}
     if (!Array.isArray(users) || !users.length) users = DEFAULT_USERS.slice();
-    const found = users.find(u => String(u.user || '').trim().toLowerCase() === user.toLowerCase() && String(u.pass || '') === pass && String(u.ativo || 'SIM').toUpperCase() !== 'NÃO');
+    const found = users.find(u => String(u.user || '').trim().toLowerCase() === String(user).toLowerCase() && String(u.pass || '') === String(pass) && String(u.ativo || 'SIM').toUpperCase() !== 'NÃO');
     if (!found) {
       err.textContent = 'Usuário ou senha incorretos.';
       err.style.display = 'block';
       return;
     }
-    setSession(found);
+    try { sessionStorage.setItem('t4_session', JSON.stringify(found)); } catch(_) {}
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     document.getElementById('user-av').textContent = (found.nome || found.user || '?')[0].toUpperCase();
     document.getElementById('user-av').style.background = found.color || 'var(--accent)';
     document.getElementById('user-name').textContent = found.nome || found.user;
     document.getElementById('user-role').textContent = found.role === 'admin' ? 'Administrador' : found.role === 'recrutador' ? 'Recrutador' : 'Visualizador';
-    try {
-      await initApp();
-    } catch (e) {
-      console.error('Erro ao iniciar app após login:', e);
-      err.textContent = 'Login feito, mas houve erro ao carregar o CRM: ' + (e && e.message ? e.message : e);
-      err.style.display = 'block';
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-    }
+    await initApp();
   } catch (e) {
-    console.error('Erro no login:', e);
     err.textContent = 'Erro no login: ' + (e && e.message ? e.message : e);
     err.style.display = 'block';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = oldText;
+    alert('Erro no login: ' + (e && e.message ? e.message : e));
   }
 }
 
