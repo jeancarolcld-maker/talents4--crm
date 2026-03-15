@@ -434,7 +434,7 @@ a{color:inherit;text-decoration:none}
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;font-size:14px;font-weight:700" onclick="doLogin()" id="li-btn">Entrar no Sistema</button>
       <div class="login-err" id="li-err">Usuário ou senha incorretos.</div>
-      <div class="login-footer">T4 Operations v6.9 · Deutschland Edition</div>
+      <div class="login-footer">T4 Operations v7.2 · Deutschland Edition · Melhorias Fase 1-2 aplicadas</div>
     </div>
   </div>
 </div>
@@ -866,6 +866,38 @@ function renderView() {
 }
 
 // ══════════════════════════════════════════════════════════════
+// HELPERS DE NEGÓCIO
+// ══════════════════════════════════════════════════════════════
+function normalizeProfissao(p) {
+  const v = (p||'').toLowerCase();
+  if (!v) return 'N/A';
+  if (v.includes('nferm') && (v.includes('técnic') || v.includes('tecnic'))) return 'Téc. Enfermagem';
+  if (v.includes('nferm'))             return 'Enfermagem';
+  if (v.includes('farm'))              return 'Farmácia';
+  if (v.includes('biomédic') || v.includes('biomedic')) return 'Biomédico/a';
+  if (v.includes('engenhar'))          return 'Engenharia';
+  if (v.includes('cuidador') || v.includes('cuidad')) return 'Cuidador de Idosos';
+  if (v.includes('fisioter'))          return 'Fisioterapia';
+  if (v.includes('odonto') || v.includes('cirurgiã-dent')) return 'Odontologia';
+  return p || 'Outros';
+}
+
+function isElegibleCalc(c) {
+  const perfil   = fv(c,'Perfil')||'';
+  const alemao   = fv(c,'Nível de alemão','Nível alemão')||'';
+  const analise  = fv(c,'Análise do recrutador','Análise recrutador')||'';
+  const profissao= fv(c,'Profissão principal','Profissão')||'';
+  const pendencia= fv(c,'Pendência documental crítica')||'';
+  const rankMap  = {'A0':0,'A1':1,'A2':2,'B1':3,'B2':4,'B2+':5,'C1':6,'C2':7,'Nenhum':0};
+  const rank     = rankMap[alemao] || 0;
+  return profissao &&
+    ['Candidato forte','Candidato bom'].includes(perfil) &&
+    rank >= 3 &&
+    analise &&
+    !pendencia;
+}
+
+// ══════════════════════════════════════════════════════════════
 // DASHBOARD BI — ENHANCED
 // ══════════════════════════════════════════════════════════════
 function daysSince(dateStr) {
@@ -919,41 +951,45 @@ function renderDashboard(el) {
     return list.filter(c => !fv(c,'Responsável interno','Avaliador')).length;
   }
 
-  // Computed — usando estágios REAIS da planilha
+  // Computed com novo score e funções melhoradas
   const b2plus        = ativos.filter(c => ['B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length;
-  const semAlemao     = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a || a==='Nenhum'; }).length;
+  const semAlemao     = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a || ['Nenhum','A0',''].includes(a); }).length;
   const triagem       = ativos.filter(c => ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE')));
-  const entrevista    = ativos.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(fv(c,'STATUS PIPELINE')));
-  const entrevistaData = cands.filter(c =>
+  const entrevistaData= cands.filter(c =>
     (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() ||
     (fv(c,'Data da Entrevista','Data entrevista')||'').trim()
   );
-  const analiseData = cands.filter(c =>
+  const analiseData   = cands.filter(c =>
     (fv(c,'Análise do recrutador','Análise recrutador')||'').trim() ||
     (fv(c,'Pontos fortes')||'').trim()
   );
   const cursoAlemao   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Curso de alemão');
   const docStage      = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Documentação');
   const employerS     = ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE')));
-  const docPend       = ativos.filter(c => !isYes(fv(c,'Documentação completa','Doc. completa'))).length;
   const prontos       = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Aprovado / Pronto').length;
   const comEmpregador = ativos.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim()).length;
-  // Inativados
   const naoQualif     = cands.filter(c => fv(c,'STATUS PIPELINE') === 'Não qualificado/ base de dados').length;
   const desistiu      = cands.filter(c => fv(c,'STATUS PIPELINE') === 'Desistiu').length;
 
-  // ── QUALITY BASE ──
-  const semProfissao  = ativos.filter(c => !fv(c,'Profissão principal','Profissão')).length;
-  const semAlemaoQ    = semAlemao;
-  const semResponsavel= ativos.filter(c => !fv(c,'Responsável interno')).length;
-  const semStatusFinal= ativos.filter(c => !fv(c,'Status Final')).length;
-  const semPerfil     = ativos.filter(c => !fv(c,'Perfil')).length;
-  const docIncompleta = ativos.filter(c => !isYes(fv(c,'Documentação completa'))).length;
-  const empSemVinculo = employerS.filter(c => !(fv(c,'Hospital alvo','Empresa / Empregador')||'').trim()).length;
-  const pendCritica   = ativos.filter(c => (fv(c,'Pendência documental crítica')||'').trim()).length;
+  // ── QUALIDADE DA BASE ──
+  const semProfissao      = ativos.filter(c => !fv(c,'Profissão principal','Profissão')).length;
+  const semResponsavel    = ativos.filter(c => !fv(c,'Responsável interno')).length;
+  const semStatusFinal    = ativos.filter(c => !fv(c,'Status Final')).length;
+  const semPerfil         = ativos.filter(c => !fv(c,'Perfil')).length;
+  const docIncompleta     = ativos.filter(c => !isYes(fv(c,'Documentação completa'))).length;
+  const empSemVinculo     = employerS.filter(c => !(fv(c,'Hospital alvo','Empresa / Empregador')||'').trim()).length;
+  const pendCritica       = ativos.filter(c => (fv(c,'Pendência documental crítica')||'').trim()).length;
+  const semCursoMarcado   = cursoAlemao.filter(c => !isYes(fv(c,'Em curso de alemão'))).length;
+  const prontosSemMarcacao= ativos.filter(c => isElegibleCalc(c) && !isYes(fv(c,'Elegível para employer'))).length;
+  const inconsistencias   = cands.filter(c => {
+    const ativo  = isYes(fv(c,'Ativo'));
+    const status = fv(c,'STATUS PIPELINE');
+    const inativo= INACTIVE_STATUSES.includes(status);
+    return (ativo && inativo) || (!ativo && !inativo && status !== '');
+  }).length;
 
   const qualityScore = ativos.length > 0
-    ? Math.round(100 - ((semProfissao + semAlemaoQ + semPerfil + docIncompleta) / (ativos.length * 4) * 100))
+    ? Math.round(100 - ((semProfissao + semAlemao + semPerfil + docIncompleta) / (ativos.length * 4) * 100))
     : 100;
 
   function qCard(ico, val, lbl, cls) {
@@ -1010,19 +1046,18 @@ function renderDashboard(el) {
     </div>`;
   }
 
-  // Inativos reais: naoQualif + desistiu + Ativo=NÃO
+  // Inativos reais
   const totalInativos = cands.filter(c => !isActiveCand(c)).length;
-  // Fortes: calculado localmente (backend pode não ter)
-  const fortes = ativos.filter(c => (fv(c,'Perfil')||'').toLowerCase().includes('forte')).length;
+  const fortes        = ativos.filter(c => (fv(c,'Perfil')||'').toLowerCase().includes('forte')).length;
 
   const kpis1 = [
     smartCard('Total Cadastrados', cands.length, 'todos os registros', 'mc-accent', [
-      { lbl:'Ativos no pipeline', val:ativos.length,    color:'var(--green)', cls:'ok'   },
-      { lbl:'Fora do pipeline',   val:totalInativos,    color:'var(--txt3)', cls:''      },
+      { lbl:'Ativos no pipeline', val:ativos.length,   color:'var(--green)', cls:'ok' },
+      { lbl:'Fora do pipeline',   val:totalInativos,   color:'var(--txt3)', cls:'' },
     ]),
     smartCard('Candidatos Ativos', ativos.length, 'no funil agora', 'mc-blue', [
-      { lbl:'Esta semana',             val:recentCount(ativos,7),    color:'var(--green)',  cls:'ok'   },
-      { lbl:'>15 dias sem atualização',val:staleCount(ativos,15),    color:'var(--yellow)', cls:'warn' },
+      { lbl:'Esta semana',              val:recentCount(ativos,7),  color:'var(--green)',  cls:'ok'   },
+      { lbl:'>15d sem atualização',     val:staleCount(ativos,15),  color:'var(--yellow)', cls:'warn' },
     ]),
     smartCard('Alemão B1+', ativos.filter(c=>['B1','B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length, 'prontos p/ processo', 'mc-purple', [
       { lbl:'B2+',        val:b2plus,    color:'var(--green)', cls:'ok'   },
@@ -1032,26 +1067,28 @@ function renderDashboard(el) {
       { lbl:'Sem responsável', val:noRespCount(triagem), color:'var(--yellow)', cls:'warn' },
       { lbl:'>15 dias parado', val:agingBands(triagem,'STATUS PIPELINE','Data entrada etapa atual')[2]+agingBands(triagem,'STATUS PIPELINE','Data entrada etapa atual')[3], color:'var(--red)', cls:'risk' },
     ]),
-    smartCard('Em Entrevista', entrevistaData.length, 'com dados de entrevista', 'mc-purple', [
-      { lbl:'Classificados',    val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Classificado').length,    color:'var(--green)',  cls:'ok'   },
-      { lbl:'Não classificados',val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Não classificado').length, color:'var(--red)',    cls:'risk' },
-      { lbl:'Em análise',       val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Em análise').length,       color:'var(--yellow)', cls:'warn' },
+    smartCard('Entrevistados', entrevistaData.length, 'com dados de entrevista', 'mc-purple', [
+      { lbl:'Classificados',     val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Classificado').length,    color:'var(--green)',  cls:'ok'   },
+      { lbl:'Não classificados', val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Não classificado').length, color:'var(--red)',    cls:'risk' },
+      { lbl:'Em análise',        val:entrevistaData.filter(c=>(fv(c,'Resultado entrevista')||'')==='Em análise').length,       color:'var(--yellow)', cls:'warn' },
     ]),
     smartCard('Curso de Alemão', cursoAlemao.length, 'em preparação linguística', 'mc-orange', [
       { lbl:'A0 (iniciantes)', val:cursoAlemao.filter(c=>fv(c,'Nível de alemão','Nível alemão')==='A0').length, color:'var(--orange)', cls:'warn' },
-      { lbl:'A1/A2',          val:cursoAlemao.filter(c=>['A1','A2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length, color:'var(--yellow)', cls:'' },
+      { lbl:'Não marcados',    val:semCursoMarcado, color:'var(--red)', cls:'risk' },
     ]),
     smartCard('Perfis Fortes', fortes, 'avaliados como forte', 'mc-gold', [
-      { lbl:'Sem perfil definido', val:semPerfil, color:'var(--yellow)', cls:'warn' },
+      { lbl:'Análise RH preenchida', val:analiseData.length, color:'var(--green)', cls:'ok' },
+      { lbl:'Sem perfil definido',   val:semPerfil,          color:'var(--yellow)', cls:'warn' },
     ]),
     smartCard('Prontos / Aprovados', prontos, 'aguardando vaga', 'mc-green', [
       { lbl:'Elegível Employer', val:ativos.filter(c=>isYes(fv(c,'Elegível para employer'))).length, color:'var(--teal)', cls:'' },
+      { lbl:'Prontos não marcados', val:prontosSemMarcacao, color:'var(--red)', cls:'risk' },
     ]),
   ];
   const kpis2 = [
     smartCard('Employer / Matching', employerS.length, 'Employer + Matching Instituição', 'mc-teal', [
-      { lbl:'Matching Instituição',    val:ativos.filter(c=>fv(c,'STATUS PIPELINE')==='Matching Instituição').length, color:'var(--teal)',   cls:''   },
-      { lbl:'Sem empresa vinculada',   val:empSemVinculo,   color:'var(--red)',   cls:'risk' },
+      { lbl:'Matching Instituição',  val:ativos.filter(c=>fv(c,'STATUS PIPELINE')==='Matching Instituição').length, color:'var(--teal)', cls:'' },
+      { lbl:'Sem empresa vinculada', val:empSemVinculo, color:'var(--red)', cls:'risk' },
     ]),
     smartCard('Contratados', ativos.filter(c=>fv(c,'STATUS PIPELINE')==='Contratado').length, 'acumulado total', 'mc-gold'),
     smartCard('Doc. Completa', ativos.filter(c=>isYes(fv(c,'Documentação completa'))).length, 'documentação 100%', 'mc-blue', [
@@ -1061,7 +1098,8 @@ function renderDashboard(el) {
       { lbl:'Sem avaliador RH', val:analiseData.filter(c=>!fv(c,'Avaliador')).length, color:'var(--yellow)', cls:'warn' },
     ]),
     smartCard('Não Qualificados', naoQualif, 'base de dados', 'mc-orange', [
-      { lbl:'Desistências', val:desistiu, color:'var(--txt3)', cls:'' },
+      { lbl:'Desistências',      val:desistiu,       color:'var(--txt3)', cls:'' },
+      { lbl:'Inconsistências',   val:inconsistencias,color:'var(--red)',  cls:inconsistencias>0?'risk':'' },
     ]),
     smartCard('Score Qualidade Base', qualityScore+'%', 'integridade dos dados', qualityScore>=70?'mc-green':qualityScore>=40?'mc-yellow':'mc-red'),
   ];
@@ -1117,7 +1155,7 @@ function renderDashboard(el) {
       <div class="bar-val">${v}</div>
     </div>`).join('');
 
-  const byProf = (charts.byProfissao || groupCount(ativos, c=>fv(c,'Profissão principal','Profissão')||'N/A')).slice(0,8);
+  const byProf = groupCount(ativos, c => normalizeProfissao(fv(c,'Profissão principal','Profissão')||'N/A')).slice(0,8);
   const maxPr = Math.max(...byProf.map(x=>x[1]),1);
   const profHtml = byProf.map(([k,v]) => `
     <div class="bar-row wide">
@@ -1192,14 +1230,16 @@ function renderDashboard(el) {
       <div class="dsh-sub">candidatos com dados críticos faltando · Score: <strong style="color:${qualityScore>=70?'var(--green)':qualityScore>=40?'var(--yellow)':'var(--red)'}">${qualityScore}%</strong></div>
     </div>
     <div class="quality-grid">
-      ${qCard('💼', semProfissao,   'Sem profissão')}
-      ${qCard('🇩🇪', semAlemaoQ,   'Sem nível de alemão')}
-      ${qCard('👤', semResponsavel, 'Sem responsável')}
-      ${qCard('⭐', semPerfil,      'Sem perfil avaliado')}
-      ${qCard('📋', docIncompleta,  'Documentação incompleta')}
-      ${qCard('⚡', pendCritica,    'Pendência crítica ativa')}
-      ${qCard('🏥', empSemVinculo,  'Employer sem empresa vinculada')}
-      ${qCard('🏁', semStatusFinal, 'Sem status final definido')}
+      ${qCard('💼', semProfissao,       'Sem profissão')}
+      ${qCard('🇩🇪', semAlemao,        'Sem nível de alemão')}
+      ${qCard('👤', semResponsavel,     'Sem responsável')}
+      ${qCard('⭐', semPerfil,          'Sem perfil avaliado')}
+      ${qCard('📋', docIncompleta,      'Documentação incompleta')}
+      ${qCard('⚡', pendCritica,        'Pendência crítica ativa')}
+      ${qCard('🏥', empSemVinculo,      'Employer sem empresa')}
+      ${qCard('🔔', semCursoMarcado,    '"Em curso" não marcado')}
+      ${qCard('⭐', prontosSemMarcacao, 'Prontos p/ employer não marcados')}
+      ${qCard('⚠', inconsistencias,    'Inconsistência Ativo × Status')}
     </div>
 
     <!-- AGING POR ETAPA -->
