@@ -292,6 +292,8 @@ a{color:inherit;text-decoration:none}
 .b-mediano{background:var(--yellow-bg);color:var(--yellow)}
 .b-fraco{background:var(--red-bg);color:var(--red)}
 .b-intermediario{background:var(--purple-bg);color:var(--purple)}
+.b-curso{background:rgba(255,140,66,.15);color:var(--orange)}
+.b-naoqualif{background:rgba(122,128,160,.12);color:var(--txt3)}
 
 /* ══════════════════════════════════ MODAL ══════════════════════════════════ */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -452,8 +454,9 @@ a{color:inherit;text-decoration:none}
     <div class="nav-item" onclick="nav('triagem')" data-v="triagem"><span class="ico">🔍</span>Triagem</div>
     <div class="nav-item" onclick="nav('entrevistas')" data-v="entrevistas"><span class="ico">🎙</span>Entrevistas</div>
     <div class="nav-item" onclick="nav('analise')" data-v="analise"><span class="ico">🧠</span>Análise RH</div>
+    <div class="nav-item" onclick="nav('alemao')" data-v="alemao"><span class="ico">🇩🇪</span>Curso de Alemão</div>
     <div class="nav-item" onclick="nav('documentacao')" data-v="documentacao"><span class="ico">📋</span>Documentação</div>
-    <div class="nav-item" onclick="nav('employer')" data-v="employer"><span class="ico">🏥</span>Employer</div>
+    <div class="nav-item" onclick="nav('employer')" data-v="employer"><span class="ico">🏥</span>Employer / Matching</div>
     <div class="nav-item" onclick="nav('inativos')" data-v="inativos"><span class="ico">📦</span>Inativos</div>
     <div class="nav-sec">Sistema</div>
     <div class="nav-item" onclick="nav('settings')" data-v="settings"><span class="ico">⚙️</span>Configurações</div>
@@ -580,18 +583,47 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbx54xgjpP4djSleqpjXHfzH
 const API_KEY = 'bed530fb36824844bfb274ff4cf34b7e640e7cdc';
 const SYNC_INTERVAL = 90000;
 
+// Estágios REAIS conforme a planilha ⭐ DB_MASTER_V5
 const PIPELINE_STAGES = [
-  'Triagem','Entrevista pessoal','Entrevista avaliação','Análise RH',
-  'Documentação','Jurídico','Employer / Matching','Aprovado / Pronto','Contratado'
+  'Novo candidato',
+  'Triagem',
+  'Entrevista pessoal',
+  'Entrevista avaliação',
+  'Análise RH',
+  'Curso de alemão',
+  'Documentação',
+  'Jurídico',
+  'Matching Instituição',
+  'Employer / Matching',
+  'Aprovado / Pronto',
+  'Contratado'
 ];
 
-const STAGE_COLORS = ['#38bdf8','#c084fc','#a78bfa','#f5c84a','#1de99b','#ff8c42','#2dd4bf','#f5c000','#10b981'];
+// Status que indicam candidato inativo (não aparecem no funil ativo)
+const INACTIVE_STATUSES = [
+  'Inativo / Arquivado',
+  'Não qualificado/ base de dados',
+  'Desistiu'
+];
+
+const STAGE_COLORS = ['#94a3b8','#38bdf8','#c084fc','#a78bfa','#f5c84a','#ff8c42','#1de99b','#fb923c','#2dd4bf','#06b6d4','#f5c000','#10b981'];
 
 const STATUS_BADGE = {
-  'Triagem':'b-triagem','Entrevista pessoal':'b-entrevista','Entrevista avaliação':'b-entrevista',
-  'Análise RH':'b-analise','Documentação':'b-docs','Jurídico':'b-juridico',
-  'Employer / Matching':'b-employer','Aprovado / Pronto':'b-aprovado',
-  'Contratado':'b-contratado','Inativo / Arquivado':'b-inativo'
+  'Novo candidato':'b-triagem',
+  'Triagem':'b-triagem',
+  'Entrevista pessoal':'b-entrevista',
+  'Entrevista avaliação':'b-entrevista',
+  'Análise RH':'b-analise',
+  'Curso de alemão':'b-curso',
+  'Documentação':'b-docs',
+  'Jurídico':'b-juridico',
+  'Matching Instituição':'b-employer',
+  'Employer / Matching':'b-employer',
+  'Aprovado / Pronto':'b-aprovado',
+  'Contratado':'b-contratado',
+  'Inativo / Arquivado':'b-inativo',
+  'Não qualificado/ base de dados':'b-naoqualif',
+  'Desistiu':'b-inativo'
 };
 const PERFIL_BADGE = {
   'Candidato forte':'b-forte','Candidato bom':'b-bom','Candidato mediano':'b-mediano',
@@ -783,7 +815,7 @@ async function forceSync() {
 
 function updateBadges() {
   const tot = S.candidates.length;
-  const act = S.candidates.filter(c => isYes(fv(c,'Ativo')) && fv(c,'STATUS PIPELINE') !== 'Inativo / Arquivado').length;
+  const act = S.candidates.filter(c => isActiveCand(c)).length;
   const a=document.getElementById('nb-total'); if(a) a.textContent=tot;
   const b=document.getElementById('nb-ativos'); if(b) b.textContent=act;
   const c=document.getElementById('nb-cands'); if(c) c.textContent=tot;
@@ -804,12 +836,12 @@ function nav(view) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.v === view));
   const titles = {
     dashboard:'Dashboard BI', kanban:'Kanban — Pipeline', candidates:'Candidatos',
-    triagem:'Triagem', entrevistas:'Entrevistas', analise:'Análise RH',
-    documentacao:'Documentação', employer:'Employer / Matching', inativos:'Inativos',
-    settings:'Configurações'
+    triagem:'Triagem & Novos Candidatos', entrevistas:'Entrevistas', analise:'Análise RH',
+    alemao:'Curso de Alemão', documentacao:'Documentação', employer:'Employer / Matching',
+    inativos:'Inativos & Não Qualificados', settings:'Configurações'
   };
   document.getElementById('tb-title').textContent = titles[view] || view;
-  const showSearch = ['candidates','kanban','triagem','entrevistas','analise','documentacao','employer','inativos'].includes(view);
+  const showSearch = ['candidates','kanban','triagem','entrevistas','analise','alemao','documentacao','employer','inativos'].includes(view);
   document.getElementById('search-wrap').style.display = showSearch ? 'flex' : 'none';
   clearFilters();
   renderView();
@@ -822,13 +854,14 @@ function renderView() {
     case 'dashboard':    renderDashboard(el);               break;
     case 'kanban':       renderKanban(el);                  break;
     case 'candidates':   renderTable(el, null);             break;
-    case 'triagem':      renderTable(el, 'Triagem');        break;
-    case 'entrevistas':  renderTable(el, '__entrevistas');  break;
-    case 'analise':      renderTable(el, 'Análise RH');     break;
-    case 'documentacao': renderTable(el, 'Documentação');   break;
-    case 'employer':     renderTable(el, 'Employer / Matching'); break;
-    case 'inativos':     renderInativo(el);                 break;
-    case 'settings':     renderSettings(el);                break;
+    case 'triagem':      renderTable(el, '__triagem');       break;
+    case 'entrevistas':  renderTable(el, '__entrevistas');   break;
+    case 'analise':      renderTable(el, 'Análise RH');      break;
+    case 'alemao':       renderTable(el, 'Curso de alemão'); break;
+    case 'documentacao': renderTable(el, 'Documentação');    break;
+    case 'employer':     renderTable(el, '__employer');      break;
+    case 'inativos':     renderInativo(el);                  break;
+    case 'settings':     renderSettings(el);                 break;
   }
 }
 
@@ -865,7 +898,7 @@ function renderDashboard(el) {
   const s = d.summary || {};
   const charts = d.charts || {};
   const cands  = S.candidates;
-  const ativos = cands.filter(c => isYes(fv(c,'Ativo')) && fv(c,'STATUS PIPELINE') !== 'Inativo / Arquivado');
+  const ativos = cands.filter(c => isActiveCand(c));
 
   const now = Date.now();
   function recentCount(list, days) {
@@ -886,17 +919,21 @@ function renderDashboard(el) {
     return list.filter(c => !fv(c,'Responsável interno','Avaliador')).length;
   }
 
-  // Computed
-  const b2plus      = ativos.filter(c => ['B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length;
-  const semAlemao   = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a || a==='Nenhum'; }).length;
-  const triagem     = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Triagem');
-  const entrevista  = ativos.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(fv(c,'STATUS PIPELINE')));
-  const analise     = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Análise RH');
-  const docStage    = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Documentação');
-  const employerS   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Employer / Matching');
-  const docPend     = ativos.filter(c => !isYes(fv(c,'Documentação completa','Doc. completa'))).length;
-  const prontos     = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Aprovado / Pronto').length;
+  // Computed — usando estágios REAIS da planilha
+  const b2plus        = ativos.filter(c => ['B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length;
+  const semAlemao     = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a || a==='Nenhum'; }).length;
+  const triagem       = ativos.filter(c => ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE')));
+  const entrevista    = ativos.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(fv(c,'STATUS PIPELINE')));
+  const analise       = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Análise RH');
+  const cursoAlemao   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Curso de alemão');
+  const docStage      = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Documentação');
+  const employerS     = ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE')));
+  const docPend       = ativos.filter(c => !isYes(fv(c,'Documentação completa','Doc. completa'))).length;
+  const prontos       = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Aprovado / Pronto').length;
   const comEmpregador = ativos.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim()).length;
+  // Inativados
+  const naoQualif     = cands.filter(c => fv(c,'STATUS PIPELINE') === 'Não qualificado/ base de dados').length;
+  const desistiu      = cands.filter(c => fv(c,'STATUS PIPELINE') === 'Desistiu').length;
 
   // ── QUALITY BASE ──
   const semProfissao  = ativos.filter(c => !fv(c,'Profissão principal','Profissão')).length;
@@ -923,13 +960,14 @@ function renderDashboard(el) {
     </div>`;
   }
 
-  // ── AGING BLOCKS ──
+  // ── AGING BLOCKS — estágios reais ──
   const agingStages = [
-    { label:'Triagem',      list:triagem,    color:'#38bdf8' },
-    { label:'Entrevistas',  list:entrevista, color:'#c084fc' },
-    { label:'Análise RH',   list:analise,    color:'#f5c84a' },
-    { label:'Documentação', list:docStage,   color:'#1de99b' },
-    { label:'Employer',     list:employerS,  color:'#2dd4bf' },
+    { label:'Triagem / Novo',   list:triagem,      color:'#38bdf8' },
+    { label:'Entrevistas',      list:entrevista,   color:'#c084fc' },
+    { label:'Análise RH',       list:analise,      color:'#f5c84a' },
+    { label:'Curso de Alemão',  list:cursoAlemao,  color:'#ff8c42' },
+    { label:'Documentação',     list:docStage,     color:'#1de99b' },
+    { label:'Employer/Matching',list:employerS,    color:'#2dd4bf' },
   ];
 
   const agingHtml = agingStages.map(ag => {
@@ -965,68 +1003,93 @@ function renderDashboard(el) {
     </div>`;
   }
 
+  // Inativos reais: naoQualif + desistiu + Ativo=NÃO
+  const totalInativos = cands.filter(c => !isActiveCand(c)).length;
+  // Fortes: calculado localmente (backend pode não ter)
+  const fortes = ativos.filter(c => (fv(c,'Perfil')||'').toLowerCase().includes('forte')).length;
+
   const kpis1 = [
-    smartCard('Total Cadastrados', s.total||cands.length, 'todos os registros', 'mc-accent', [
-      { lbl:'Ativos',    val:ativos.length, color:'var(--green)', cls:'ok' },
-      { lbl:'Inativos',  val:s.inativos||0, color:'var(--txt3)', cls:'' },
+    smartCard('Total Cadastrados', cands.length, 'todos os registros', 'mc-accent', [
+      { lbl:'Ativos no pipeline', val:ativos.length,    color:'var(--green)', cls:'ok'   },
+      { lbl:'Fora do pipeline',   val:totalInativos,    color:'var(--txt3)', cls:''      },
     ]),
-    smartCard('Candidatos Ativos', ativos.length, `${s.inativos||0} inativos`, 'mc-blue', [
-      { lbl:'Esta semana', val:recentCount(ativos,7),  color:'var(--green)',  cls:'ok'   },
-      { lbl:'>15 dias sem atualização', val:staleCount(ativos,15), color:'var(--yellow)', cls:'warn' },
+    smartCard('Candidatos Ativos', ativos.length, 'no funil agora', 'mc-blue', [
+      { lbl:'Esta semana',             val:recentCount(ativos,7),    color:'var(--green)',  cls:'ok'   },
+      { lbl:'>15 dias sem atualização',val:staleCount(ativos,15),    color:'var(--yellow)', cls:'warn' },
     ]),
-    smartCard('Alemão B1+', s.b1Plus||0, 'prontos p/ processo', 'mc-purple', [
-      { lbl:'B2+', val:b2plus, color:'var(--green)', cls:'ok' },
-      { lbl:'Sem alemão', val:semAlemao, color:'var(--red)', cls:'risk' },
+    smartCard('Alemão B1+', ativos.filter(c=>['B1','B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length, 'prontos p/ processo', 'mc-purple', [
+      { lbl:'B2+',        val:b2plus,    color:'var(--green)', cls:'ok'   },
+      { lbl:'Sem alemão', val:semAlemao, color:'var(--red)',   cls:'risk' },
     ]),
-    smartCard('Em Triagem', triagem.length, 'aguardando avaliação', 'mc-blue', [
+    smartCard('Triagem / Novos', triagem.length, 'aguardando avaliação', 'mc-blue', [
       { lbl:'Sem responsável', val:noRespCount(triagem), color:'var(--yellow)', cls:'warn' },
       { lbl:'>15 dias parado', val:agingBands(triagem,'STATUS PIPELINE','Data entrada etapa atual')[2]+agingBands(triagem,'STATUS PIPELINE','Data entrada etapa atual')[3], color:'var(--red)', cls:'risk' },
     ]),
     smartCard('Em Entrevista', entrevista.length, '1ª ou 2ª entrevista', 'mc-purple', [
       { lbl:'Sem avaliador', val:entrevista.filter(c=>!fv(c,'Avaliador')).length, color:'var(--yellow)', cls:'warn' },
     ]),
-    smartCard('Perfis Fortes', s.fortes||0, 'candidato forte avaliado', 'mc-gold', [
+    smartCard('Curso de Alemão', cursoAlemao.length, 'em preparação linguística', 'mc-orange', [
+      { lbl:'A0 (iniciantes)', val:cursoAlemao.filter(c=>fv(c,'Nível de alemão','Nível alemão')==='A0').length, color:'var(--orange)', cls:'warn' },
+      { lbl:'A1/A2',          val:cursoAlemao.filter(c=>['A1','A2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length, color:'var(--yellow)', cls:'' },
+    ]),
+    smartCard('Perfis Fortes', fortes, 'avaliados como forte', 'mc-gold', [
       { lbl:'Sem perfil definido', val:semPerfil, color:'var(--yellow)', cls:'warn' },
     ]),
     smartCard('Prontos / Aprovados', prontos, 'aguardando vaga', 'mc-green', [
-      { lbl:'Elegível Employer', val:s.elegivelEmp||0, color:'var(--teal)', cls:'' },
+      { lbl:'Elegível Employer', val:ativos.filter(c=>isYes(fv(c,'Elegível para employer'))).length, color:'var(--teal)', cls:'' },
     ]),
-    smartCard('Contratados', s.contratados||0, 'acumulado total', 'mc-gold'),
   ];
   const kpis2 = [
-    smartCard('Em Employer', employerS.length, 'matching ativo', 'mc-teal', [
-      { lbl:'Sem empresa vinculada', val:empSemVinculo, color:'var(--red)', cls:'risk' },
-      { lbl:'Com empresa', val:comEmpregador, color:'var(--green)', cls:'ok' },
+    smartCard('Employer / Matching', employerS.length, 'Employer + Matching Instituição', 'mc-teal', [
+      { lbl:'Matching Instituição',    val:ativos.filter(c=>fv(c,'STATUS PIPELINE')==='Matching Instituição').length, color:'var(--teal)',   cls:''   },
+      { lbl:'Sem empresa vinculada',   val:empSemVinculo,   color:'var(--red)',   cls:'risk' },
     ]),
-    smartCard('Doc. Completa', s.docCompleta||0, 'documentação 100%', 'mc-blue', [
+    smartCard('Contratados', ativos.filter(c=>fv(c,'STATUS PIPELINE')==='Contratado').length, 'acumulado total', 'mc-gold'),
+    smartCard('Doc. Completa', ativos.filter(c=>isYes(fv(c,'Documentação completa'))).length, 'documentação 100%', 'mc-blue', [
       { lbl:'Pendência crítica', val:pendCritica, color:'var(--red)', cls:'risk' },
     ]),
-    smartCard('Alta Prioridade', ativos.filter(c=>c['Prioridade comercial']==='Alta').length, 'prioridade=Alta', 'mc-red'),
     smartCard('Análise RH', analise.length, 'em avaliação RH', 'mc-yellow', [
       { lbl:'Sem avaliador RH', val:analise.filter(c=>!fv(c,'Avaliador')).length, color:'var(--yellow)', cls:'warn' },
     ]),
-    smartCard('Inativos', s.inativos||0, 'arquivados/desistentes', 'mc-orange'),
+    smartCard('Não Qualificados', naoQualif, 'base de dados', 'mc-orange', [
+      { lbl:'Desistências', val:desistiu, color:'var(--txt3)', cls:'' },
+    ]),
     smartCard('Score Qualidade Base', qualityScore+'%', 'integridade dos dados', qualityScore>=70?'mc-green':qualityScore>=40?'mc-yellow':'mc-red'),
   ];
 
-  // Funnel
-  const funnel = charts.funnel || [];
-  const maxF = Math.max(...funnel.map(f=>f.count),1);
-  const funnelHtml = funnel.map((f,i) => {
-    const pct  = maxF > 0 ? ((f.count/maxF)*100).toFixed(0) : 0;
-    const prev = i > 0 ? funnel[i-1].count : f.count;
+  // Funil — calculado localmente com estágios REAIS
+  const funnelStages = [
+    'Novo candidato','Triagem','Entrevista pessoal','Entrevista avaliação',
+    'Análise RH','Curso de alemão','Documentação','Jurídico',
+    'Matching Instituição','Employer / Matching','Aprovado / Pronto','Contratado'
+  ];
+  const funnelLocal = funnelStages.map(stage => ({
+    stage, count: ativos.filter(c => fv(c,'STATUS PIPELINE') === stage).length
+  })).filter(f => f.count > 0); // só mostra estágios com candidatos
+
+  const maxF = Math.max(...funnelLocal.map(f=>f.count), 1);
+  const funnelHtml = funnelLocal.map((f, i) => {
+    const pct  = ((f.count/maxF)*100).toFixed(0);
+    const prev = i > 0 ? funnelLocal[i-1].count : f.count;
     const conv = prev > 0 ? ((f.count/prev)*100).toFixed(0) : 100;
+    const color = STAGE_COLORS[funnelStages.indexOf(f.stage)] || 'var(--accent)';
     return `<div class="funnel-row">
-      <div class="funnel-lbl" style="color:${STAGE_COLORS[i]||'var(--txt2)'}">${f.stage}</div>
-      <div><div class="funnel-bg"><div class="funnel-bar" style="width:${pct}%;background:${STAGE_COLORS[i]||'var(--accent)'}"></div></div></div>
+      <div class="funnel-lbl" style="color:${color}">${f.stage}</div>
+      <div><div class="funnel-bg"><div class="funnel-bar" style="width:${pct}%;background:${color}"></div></div></div>
       <div style="text-align:right">
         <div class="funnel-val">${f.count}</div>
         ${i>0 ? `<div class="funnel-pct">${conv}%</div>` : ''}
       </div>
     </div>`;
-  }).join('');
+  }).join('') || '<p style="color:var(--txt3);font-size:12px">Sem dados</p>';
 
-  const byPerfil = charts.byPerfil || groupCount(ativos, c=>c['Perfil']||'Não avaliado');
+  // Perfil — normaliza variante "Intermediário" → "Candidato intermediário"
+  const byPerfilRaw = groupCount(ativos, c => {
+    let p = fv(c,'Perfil') || 'Não avaliado';
+    if (p === 'Intermediário') p = 'Candidato intermediário';
+    return p;
+  });
+  const byPerfil = byPerfilRaw;
   const maxP = Math.max(...byPerfil.map(x=>x[1]),1);
   const PCOL = {'Candidato forte':'#1de99b','Candidato bom':'#38bdf8','Candidato mediano':'#f5c84a','Candidato fraco':'#ff4d6a','Candidato intermediário':'#c084fc','Não avaliado':'#424660'};
   const perfilHtml = byPerfil.map(([k,v]) => `
@@ -1036,7 +1099,7 @@ function renderDashboard(el) {
       <div class="bar-val">${v}</div>
     </div>`).join('');
 
-  const byAlemao = charts.byAlemao || groupCount(ativos, c=>fv(c,'Nível de alemão','Nível alemão')||'Nenhum');
+  const byAlemao = groupCount(ativos, c => fv(c,'Nível alemão','Nível de alemão') || 'Nenhum');
   const maxA = Math.max(...byAlemao.map(x=>x[1]),1);
   const alemaoHtml = byAlemao.map(([k,v]) => `
     <div class="bar-row narrow">
@@ -1241,18 +1304,27 @@ function kanbanCard(c) {
 // TABLE VIEW
 // ══════════════════════════════════════════════════════════════
 function renderTable(el, filterStatus) {
-  let list = filterCands(S.candidates, filterStatus === '__inativos');
-  if (filterStatus && filterStatus !== '__entrevistas') {
-    list = list.filter(c => c['STATUS PIPELINE'] === filterStatus);
+  // Sempre começa dos candidatos ativos (sem inativos)
+  let list = filterCands(S.candidates, false);
+
+  if (filterStatus === '__triagem') {
+    list = list.filter(c => ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE')));
   } else if (filterStatus === '__entrevistas') {
-    list = list.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(c['STATUS PIPELINE']));
+    list = list.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(fv(c,'STATUS PIPELINE')));
+  } else if (filterStatus === '__employer') {
+    list = list.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE')));
+  } else if (filterStatus) {
+    list = list.filter(c => fv(c,'STATUS PIPELINE') === filterStatus);
   }
 
   const total  = list.length;
   const pages  = Math.ceil(total / S.pageSize);
   const paged  = list.slice((S.page-1)*S.pageSize, S.page*S.pageSize);
 
-  const statusOpts   = ['','Triagem','Entrevista pessoal','Entrevista avaliação','Análise RH','Documentação','Jurídico','Employer / Matching','Aprovado / Pronto','Contratado'];
+  const statusOpts = ['','Novo candidato','Triagem','Entrevista pessoal','Entrevista avaliação',
+    'Análise RH','Curso de alemão','Documentação','Jurídico',
+    'Matching Instituição','Employer / Matching','Aprovado / Pronto','Contratado',
+    'Não qualificado/ base de dados','Desistiu','Inativo / Arquivado'];
   const alemaoOpts   = ['','Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
   const perfilOpts   = ['','Candidato forte','Candidato bom','Candidato mediano','Candidato fraco','Candidato intermediário'];
   const profissaoOpts= [''].concat([...new Set((S.enums['Profissão principal']||S.candidates.map(c=>fv(c,'Profissão principal','Profissão'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
@@ -1321,7 +1393,10 @@ function renderTable(el, filterStatus) {
 
 function renderInativo(el) {
   S.filter.status = '';
-  const list = S.candidates.filter(c => !isYes(fv(c,'Ativo')) || fv(c,'STATUS PIPELINE') === 'Inativo / Arquivado');
+  // Todos que são inativos: Ativo=NÃO OU status é um dos inativos conhecidos
+  const list = S.candidates.filter(c =>
+    !isYes(fv(c,'Ativo')) || INACTIVE_STATUSES.includes(fv(c,'STATUS PIPELINE'))
+  );
   const rows = list.map(c => `
     <tr onclick="openCand('${esc(c.ID)}')">
       <td class="td-name">${esc(c['Nome completo']||'—')}</td>
@@ -1388,7 +1463,7 @@ function buildCandModal(c) {
   document.getElementById('cm-body').innerHTML = tracker + TABS.map(t =>
     `<div class="detail-panel ${t.id==='t-pipeline'?'active':''}" id="${t.id}">${buildPanel(t.id,c)}</div>`
   ).join('');
-  const isActive = c['Ativo']==='SIM' && st!=='Inativo / Arquivado';
+  const isActive = isActiveCand(c);
   const btn = document.getElementById('cm-active-btn');
   btn.textContent = isActive ? '🚫 Inativar' : '✅ Reativar';
   btn.style.color  = isActive ? 'var(--red)' : 'var(--green)';
@@ -1584,7 +1659,7 @@ async function saveCandidate() {
 async function toggleActive() {
   if (!S.currentCand) return;
   const c = S.currentCand;
-  const isActive = c['Ativo']==='SIM' && c['STATUS PIPELINE']!=='Inativo / Arquivado';
+  const isActive = isActiveCand(c);
   if (!confirm(isActive ? 'Inativar este candidato?' : 'Reativar este candidato?')) return;
   const sess = getSession();
   try {
@@ -1905,9 +1980,15 @@ async function quickAddEnum(field, btn, targetSelectId='') {
 // ══════════════════════════════════════════════════════════════
 // FILTERS & HELPERS
 // ══════════════════════════════════════════════════════════════
+function isActiveCand(c) {
+  const ativo  = fv(c,'Ativo');
+  const status = fv(c,'STATUS PIPELINE');
+  return isYes(ativo) && !INACTIVE_STATUSES.includes(status);
+}
+
 function filterCands(list, includeInactive=false) {
   let r = list;
-  if (!includeInactive) r = r.filter(c => isYes(fv(c,'Ativo')) && fv(c,'STATUS PIPELINE') !== 'Inativo / Arquivado');
+  if (!includeInactive) r = r.filter(c => isActiveCand(c));
   if (S.filter.status)   r = r.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
   if (S.filter.perfil)   r = r.filter(c => fv(c,'Perfil') === S.filter.perfil);
   if (S.filter.profissao)r = r.filter(c => fv(c,'Profissão principal','Profissão') === S.filter.profissao);
