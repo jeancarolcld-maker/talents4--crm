@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>T4 Operations — CRM Enterprise v6.1</title>
+<title>T4 Operations — CRM Enterprise</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -267,12 +267,6 @@ a{color:inherit;text-decoration:none}
 .filter-select{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--txt2);cursor:pointer}
 .filter-select option{background:var(--bg2)}
 
-
-.select-with-add{display:flex;gap:6px;align-items:center}
-.select-with-add .field-select{flex:1}
-.btn-addopt{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);color:var(--txt2);font-size:16px;flex-shrink:0}
-.btn-addopt:hover{border-color:var(--accent);color:var(--accent2)}
-
 /* Pagination */
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 0 0}
 .pg-btn{width:30px;height:30px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--txt2);transition:all .12s;cursor:pointer}
@@ -438,22 +432,17 @@ a{color:inherit;text-decoration:none}
   <div class="modal" style="width:min(560px,96vw)">
     <div class="modal-hdr">
       <div class="modal-av" style="background:var(--green-bg);color:var(--green)">+</div>
-      <div style="flex:1"><div class="modal-title">Novo Candidato</div><div style="font-size:12px;color:var(--txt3)">Preencha os dados básicos</div></div>
+      <div style="flex:1"><div class="modal-title">Novo Candidato</div><div style="font-size:12px;color:var(--txt3)">Somente o nome é necessário; os demais campos podem ser preenchidos depois</div></div>
       <button class="modal-close" onclick="closeNew()">✕</button>
     </div>
     <div class="modal-body" style="padding:16px 22px 20px;overflow-y:auto;max-height:60vh">
       <div class="field-grid">
-        <div class="field-group fg-full"><label class="field-lbl">Nome completo *</label><input class="field-input" id="n-nome" placeholder="Nome completo"></div>
+        <div class="field-group fg-full"><label class="field-lbl">Nome completo</label><input class="field-input" id="n-nome" placeholder="Nome completo"></div>
         <div class="field-group"><label class="field-lbl">E-mail</label><input class="field-input" id="n-email" type="email" placeholder="email@exemplo.com"></div>
         <div class="field-group"><label class="field-lbl">Telefone</label><input class="field-input" id="n-tel" placeholder="+55 11 99999-9999"></div>
         <div class="field-group"><label class="field-lbl">País de origem</label><input class="field-input" id="n-pais" placeholder="Brasil" value="BRASIL"></div>
         <div class="field-group"><label class="field-lbl">Cidade atual</label><input class="field-input" id="n-cidade" placeholder="São Paulo - SP"></div>
-        <div class="field-group"><label class="field-lbl">Profissão</label>
-          <div class="select-with-add">
-            <select class="field-select" id="n-prof"><option value="">Selecionar</option></select>
-            <button class="btn-addopt" type="button" onclick="promptAddOption('Profissão principal','n-prof')" title="Adicionar nova profissão">+</button>
-          </div>
-        </div>
+        <div class="field-group"><label class="field-lbl">Profissão</label><input class="field-input" id="n-prof" placeholder="Enfermeiro(a)"></div>
         <div class="field-group"><label class="field-lbl">Área profissional</label><input class="field-input" id="n-area" placeholder="Enfermagem hospitalar"></div>
         <div class="field-group"><label class="field-lbl">Nível de alemão</label><select class="field-select" id="n-alemao"><option value="">Selecionar</option></select></div>
         <div class="field-group"><label class="field-lbl">Status inicial</label><select class="field-select" id="n-status"><option value="">Selecionar</option></select></div>
@@ -479,7 +468,7 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="modal-body" style="padding:16px 22px 20px">
       <div class="field-grid">
-        <div class="field-group fg-full"><label class="field-lbl">Nome completo *</label><input class="field-input" id="um-nome" placeholder="Nome do colaborador"></div>
+        <div class="field-group fg-full"><label class="field-lbl">Nome completo</label><input class="field-input" id="um-nome" placeholder="Nome do colaborador"></div>
         <div class="field-group fg-full"><label class="field-lbl">Usuário (login) *</label><input class="field-input" id="um-user" placeholder="usuario@talents4.com"></div>
         <div class="field-group"><label class="field-lbl">Senha *</label><input class="field-input" type="password" id="um-pass" placeholder="Mínimo 6 caracteres"></div>
         <div class="field-group"><label class="field-lbl">Confirmar senha</label><input class="field-input" type="password" id="um-pass2" placeholder="Repetir senha"></div>
@@ -507,8 +496,8 @@ a{color:inherit;text-decoration:none}
 // ══════════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbx54xgjpP4djSleqpjXHfzHXfsxyhVuc7gqZsJJqWX9nUUi9G6hGymBA6I8ONT5LEjL/exec';
-const API_KEY = 'bed530fb36824844bfb274ff4cf34b7e640e7cdc';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyK9yEGl8tp5jLQ8PZLHGdvNY-_wvEHsaJJIcpYVzmRaQ_ja5gtkNLhNi_J55mzsoBl/exec';
+const API_KEY = '005177ec83894592a73c17c223d342e1021ca913';
 const SYNC_INTERVAL = 90000; // 90s auto-sync
 
 const PIPELINE_STAGES = [
@@ -535,88 +524,20 @@ const ALEMAO_COLORS = {
   'B1':'#818cf8','B2':'#a78bfa','B2+':'#c084fc','C1':'#22c55e','C2':'#10b981'
 };
 
-
-const LOCAL_ENUMS_KEY = 't4_local_enums_v51';
-
-function loadLocalEnums() {
-  try { return JSON.parse(localStorage.getItem(LOCAL_ENUMS_KEY) || '{}') || {}; }
-  catch { return {}; }
-}
-function saveLocalEnums(data) { localStorage.setItem(LOCAL_ENUMS_KEY, JSON.stringify(data || {})); }
-
-function normalizeOption(val) {
-  return String(val || '').trim().replace(/\s+/g, ' ');
-}
-
-function uniqueOptions(arr) {
-  const seen = new Map();
-  (arr || []).forEach(v => {
-    const n = normalizeOption(v);
-    if (!n) return;
-    const key = n.toLowerCase();
-    if (!seen.has(key)) seen.set(key, n);
-  });
-  return Array.from(seen.values()).sort((a,b) => a.localeCompare(b, 'pt-BR'));
-}
-
-function getDerivedOptionsFromCandidates(field) {
-  return uniqueOptions(S.candidates.map(c => c[field]).filter(Boolean));
-}
-
-function getEnumOptions(field) {
-  const base = Array.isArray(S.enums[field]) ? S.enums[field] : [];
-  const local = loadLocalEnums()[field] || [];
-  let derived = [];
-  if (field === 'Profissão principal' || field === 'Área profissional' || field === 'Responsável interno' || field === 'Hospital alvo') {
-    derived = getDerivedOptionsFromCandidates(field);
-  }
-  return uniqueOptions([...(base || []), ...(local || []), ...(derived || [])]);
-}
-
-function addLocalOption(field, value) {
-  const val = normalizeOption(value);
-  if (!val) return null;
-  const data = loadLocalEnums();
-  data[field] = uniqueOptions([...(data[field] || []), val]);
-  saveLocalEnums(data);
-  S.enums[field] = uniqueOptions([...(S.enums[field] || []), val]);
-  return val;
-}
-
-function promptAddOption(field, targetSelectId, targetFieldName) {
-  const current = targetSelectId ? document.getElementById(targetSelectId) : null;
-  const label = field || targetFieldName || 'Opção';
-  const value = prompt(`Adicionar nova opção para "${label}"`);
-  if (!value) return;
-  const added = addLocalOption(field || targetFieldName, value);
-  if (!added) return;
-  if (current) {
-    refreshSelectOptions(current, field || targetFieldName, added);
-  }
-  toast('✅ Opção adicionada: ' + added, 'ok');
-}
-
-function refreshSelectOptions(selectEl, field, selectedValue) {
-  if (!selectEl) return;
-  const options = getEnumOptions(field);
-  const keepEmpty = '<option value="">— Selecionar —</option>';
-  selectEl.innerHTML = keepEmpty + options.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
-  selectEl.value = selectedValue || '';
-}
-
 // ══════════════════════════════════════════════════════════════
 // AUTH — Local user management
 // ══════════════════════════════════════════════════════════════
 const DEFAULT_USERS = [
   { user:'admin', pass:'t4admin2026', nome:'Administrador', role:'admin', color:'#5b6af0' },
+  { user:'sara', pass:'t4sara2026', nome:'Sara', role:'recrutador', color:'#c084fc' },
+  { user:'carol', pass:'t4carol2026', nome:'Carol', role:'recrutador', color:'#2dd4bf' },
 ];
 
 function getUsers() {
-  return Array.isArray(S.users) && S.users.length ? S.users : DEFAULT_USERS;
+  try { return JSON.parse(localStorage.getItem('t4_users') || 'null') || DEFAULT_USERS; }
+  catch { return DEFAULT_USERS; }
 }
-function saveUsers(u) {
-  S.users = Array.isArray(u) ? u : [];
-}
+function saveUsers(u) { localStorage.setItem('t4_users', JSON.stringify(u)); }
 function getSession() {
   try { return JSON.parse(sessionStorage.getItem('t4_session') || 'null'); }
   catch { return null; }
@@ -660,12 +581,11 @@ const S = {
   enums: {},
   dashboard: null,
   schema: [],
-  users: [],
   loading: false,
   currentCand: null,
   pendingEdits: {},
   page: 1, pageSize: 80,
-  filter: { status:'', q:'', perfil:'', alemao:'', profissao:'' },
+  filter: { status:'', q:'', perfil:'', alemao:'' },
   syncTimer: null,
   lastSync: null,
 };
@@ -683,8 +603,21 @@ async function apiGet(params) {
   return d;
 }
 async function apiPost(body) {
-  const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({...body, key: API_KEY}) });
-  const d = await r.json();
+  const payload = JSON.stringify({ ...body, key: API_KEY });
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: payload,
+    redirect: 'follow'
+  });
+  const raw = await r.text();
+  let d;
+  try {
+    d = JSON.parse(raw);
+  } catch (e) {
+    throw new Error('Resposta inválida da API');
+  }
+  if (!r.ok) throw new Error('HTTP ' + r.status);
   if (!d.ok) throw new Error(d.error || 'Erro na API');
   return d;
 }
@@ -717,10 +650,8 @@ async function loadAll() {
     S.dashboard  = dashResp;
     S.schema     = schemaResp.schema || [];
     S.enums      = schemaResp.enums  || {};
-    S.users      = Array.isArray(schemaResp.users) ? schemaResp.users : [];
     S.lastSync   = new Date();
     updateBadges();
-    populateNewForm();
     setSyncStatus('ok');
     return true;
   } catch(e) {
@@ -1048,7 +979,6 @@ function renderTable(el, filterStatus) {
   const statusOpts = ['','Triagem','Entrevista pessoal','Entrevista avaliação','Análise RH','Documentação','Jurídico','Employer / Matching','Aprovado / Pronto','Contratado'];
   const alemaoOpts = ['','Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
   const perfilOpts = ['','Candidato forte','Candidato bom','Candidato mediano','Candidato fraco','Candidato intermediário'];
-  const profissaoOpts = [''].concat(getEnumOptions('Profissão principal'));
 
   const filterBar = `
     <div class="filters-bar">
@@ -1056,9 +986,6 @@ function renderTable(el, filterStatus) {
       <div style="flex:1"></div>
       <select class="filter-select" onchange="setFilter('status',this.value)">
         ${statusOpts.map(s => `<option value="${s}" ${S.filter.status===s?'selected':''}>${s||'Todos os status'}</option>`).join('')}
-      </select>
-      <select class="filter-select" onchange="setFilter('profissao',this.value)">
-        ${profissaoOpts.map(p => `<option value="${esc(p)}" ${S.filter.profissao===p?'selected':''}>${esc(p||'Profissão (todas)')}</option>`).join('')}
       </select>
       <select class="filter-select" onchange="setFilter('alemao',this.value)">
         ${alemaoOpts.map(a => `<option value="${a}" ${S.filter.alemao===a?'selected':''}>${a||'Alemão (todos)'}</option>`).join('')}
@@ -1212,16 +1139,13 @@ function buildPanel(tabId, c) {
     const v = c[field] || '';
     const cls = fullWidth ? 'field-group fg-full' : 'field-group';
     if (type === 'select') {
-      const optionList = (opts && opts.length ? opts : getEnumOptions(field)).map(o =>
+      const options = (opts || enums[field] || []).map(o =>
         `<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('');
       return `<div class="${cls}">
         <label class="field-lbl">${label}</label>
-        <div class="select-with-add">
-          <select class="field-select" data-field="${esc(field)}" onchange="onEdit(this)">
-            <option value="">— Selecionar —</option>${optionList}
-          </select>
-          <button class="btn-addopt" type="button" onclick="promptAddOption('${esc(field)}', null, '${esc(field)}'); rebuildCurrentPanelSelects();" title="Adicionar nova opção">+</button>
-        </div>
+        <select class="field-select" data-field="${esc(field)}" onchange="onEdit(this)">
+          <option value="">— Selecionar —</option>${options}
+        </select>
       </div>`;
     }
     if (type === 'textarea') {
@@ -1290,8 +1214,8 @@ function buildPanel(tabId, c) {
       <div>
         <div class="section-hdr">Formação & Carreira</div>
         <div class="field-grid">
-          ${fld('Profissão principal','Profissão principal','select')}
-          ${fld('Área profissional','Área profissional','select')}
+          ${fld('Profissão principal','Profissão principal')}
+          ${fld('Área profissional','Área profissional')}
           ${fld('Universidade','Universidade / Formação')}
           ${fld('Curso de Graduação','Curso de Graduação')}
           ${fld('Anabin','Classificação Anabin','select')}
@@ -1412,15 +1336,6 @@ function onEdit(el) {
   document.getElementById('cm-save').textContent = `💾 Salvar (${n})`;
 }
 
-
-function rebuildCurrentPanelSelects() {
-  if (!S.currentCand) return;
-  const activeTab = document.querySelector('.detail-tab.active')?.dataset.tab || 't-profissional';
-  const panel = document.getElementById(activeTab);
-  if (!panel) return;
-  panel.innerHTML = buildPanel(activeTab, S.currentCand);
-}
-
 async function saveCandidate() {
   if (!S.currentCand) return;
   if (!Object.keys(S.pendingEdits).length) { toast('Nenhuma alteração detectada.', 'warn'); return; }
@@ -1467,16 +1382,11 @@ function closeCandOverlay(e) { if(e.target===document.getElementById('cand-overl
 function populateNewForm() {
   const alemaoSel = document.getElementById('n-alemao');
   const statusSel = document.getElementById('n-status');
-  const profSel   = document.getElementById('n-prof');
   if (!alemaoSel || !statusSel) return;
   alemaoSel.innerHTML = '<option value="">Selecionar</option>' +
     ['Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'].map(o=>`<option>${o}</option>`).join('');
   statusSel.innerHTML = '<option value="">Selecionar</option>' +
     PIPELINE_STAGES.map(o=>`<option>${o}</option>`).join('');
-  if (profSel) {
-    profSel.innerHTML = '<option value="">Selecionar</option>' +
-      getEnumOptions('Profissão principal').map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
-  }
 }
 
 function openNewCandidate() { document.getElementById('new-overlay').classList.add('open'); }
@@ -1512,9 +1422,6 @@ async function submitNew() {
     closeNew();
     btn.textContent = '✓ Criar Candidato'; btn.disabled = false;
     ['n-nome','n-email','n-tel','n-cidade','n-prof','n-area','n-origem','n-resp','n-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    document.getElementById('n-pais').value = 'BRASIL';
-    document.getElementById('n-alemao').value = '';
-    document.getElementById('n-status').value = '';
     await loadAll();
     renderView();
   } catch(e) {
@@ -1566,11 +1473,11 @@ function renderSettings(el) {
         <div class="settings-panel" id="s-enums">
           <div class="settings-card">
             <h3>Listas de Valores (Dropdowns)</h3>
-            <p>Edite as opções disponíveis nos dropdowns. As novas opções são gravadas no backend e ficam disponíveis para todos os usuários.</p>
+            <p>Edite as opções disponíveis nos dropdowns de cada campo. As alterações são salvas localmente.</p>
             <div style="margin-bottom:12px">
               <label class="field-lbl">Campo a editar</label>
               <select class="field-select" style="max-width:280px;margin-top:4px" onchange="loadEnumEditor(this.value)" id="enum-field-sel">
-                ${uniqueOptions(['STATUS PIPELINE','Profissão principal', ...Object.keys(S.enums)]).map(k=>`<option value="${k}" ${k==='STATUS PIPELINE'?'selected':''}>${k}</option>`).join('')}
+                ${Object.keys(S.enums).map(k=>`<option value="${k}" ${k==='STATUS PIPELINE'?'selected':''}>${k}</option>`).join('')}
               </select>
             </div>
             <div id="enum-editor">${enumEditorHtml}</div>
@@ -1601,7 +1508,7 @@ function renderSettings(el) {
         <!-- ABOUT -->
         <div class="settings-panel" id="s-about">
           <div class="settings-card">
-            <h3>T4 Operations CRM v6.1</h3>
+            <h3>T4 Operations CRM v5.1</h3>
             <p>Sistema operacional para recrutamento internacional — Talents 4.</p>
             <div style="font-size:12.5px;color:var(--txt2);line-height:1.8">
               <div>🗂 Backend: Google Apps Script + Google Sheets</div>
@@ -1609,7 +1516,7 @@ function renderSettings(el) {
               <div>🔄 Sync automático: a cada 90 segundos</div>
               <div>📊 Candidatos carregados: ${S.candidates.length}</div>
               <div style="margin-top:12px;font-size:11px;color:var(--txt3)">
-                Usuários e listas principais estão centralizados no backend. A sessão continua no navegador.
+                Credenciais e usuários ficam no localStorage/sessionStorage do navegador.
               </div>
             </div>
           </div>
@@ -1643,7 +1550,7 @@ function openUserModal(editIdx) {
 function closeUserModal() { document.getElementById('user-overlay').classList.remove('open'); }
 function closeUserOverlay(e) { if(e.target===document.getElementById('user-overlay')) closeUserModal(); }
 
-async function saveUser() {
+function saveUser() {
   const nome = document.getElementById('um-nome').value.trim();
   const user = document.getElementById('um-user').value.trim();
   const pass = document.getElementById('um-pass').value;
@@ -1660,36 +1567,25 @@ async function saveUser() {
   if (users.find(u => u.user === user)) { err.textContent='Este usuário já existe.'; err.style.display='block'; return; }
 
   const COLORS = ['#5b6af0','#c084fc','#2dd4bf','#f5c84a','#ff8c42','#38bdf8','#1de99b','#ff4d6a'];
-  try {
-    const resp = await apiPost({ action:'saveUser', user:{ user, pass, nome, role, color: COLORS[users.length % COLORS.length], ativo:'SIM' } });
-    S.users = resp.users || [];
-    closeUserModal();
-    toast('✅ Usuário criado: ' + nome, 'ok');
-    renderView();
-  } catch(e) {
-    err.textContent = e.message || 'Erro ao salvar usuário';
-    err.style.display = 'block';
-  }
+  users.push({ user, pass, nome, role, color: COLORS[users.length % COLORS.length] });
+  saveUsers(users);
+  closeUserModal();
+  toast('✅ Usuário criado: ' + nome, 'ok');
+  renderView();
 }
 
-async function deleteUser(i) {
+function deleteUser(i) {
   if (!confirm('Remover este usuário?')) return;
   const users = getUsers();
-  const target = users[i];
-  if (!target) return;
-  try {
-    const resp = await apiPost({ action:'deleteUser', userLogin: target.user });
-    S.users = resp.users || [];
-    toast('Usuário removido.', 'ok');
-    renderView();
-  } catch(e) {
-    toast('❌ ' + e.message, 'err');
-  }
+  users.splice(i, 1);
+  saveUsers(users);
+  toast('Usuário removido.', 'ok');
+  renderView();
 }
 
 // Enum editor
 function buildEnumEditor(field) {
-  const opts = getEnumOptions(field);
+  const opts = S.enums[field] || [];
   const tags = opts.map((o,i) => `
     <div class="enum-tag">
       <span>${esc(o)}</span>
@@ -1708,37 +1604,21 @@ function loadEnumEditor(field) {
   document.getElementById('enum-editor').innerHTML = buildEnumEditor(field);
 }
 
-async function addEnum(field) {
+function addEnum(field) {
   const input = document.getElementById('enum-new-val');
   const val   = input.value.trim();
   if (!val) return;
-  try {
-    await apiPost({ action:'upsertEnum', field, value: val });
-    const schemaResp = await apiGet({ route:'schema' });
-    S.enums = schemaResp.enums || {};
-    input.value = '';
-    loadEnumEditor(field);
-    populateNewForm();
-    toast('✅ Opção adicionada.', 'ok');
-  } catch(e) {
-    toast('❌ ' + e.message, 'err');
-  }
+  if (!S.enums[field]) S.enums[field] = [];
+  if (!S.enums[field].includes(val)) { S.enums[field].push(val); }
+  input.value = '';
+  loadEnumEditor(field);
+  toast('✅ Opção adicionada.', 'ok');
 }
 
-async function removeEnum(field, i) {
-  const opts = getEnumOptions(field);
-  const target = opts[i];
-  if (!target) return;
-  try {
-    await apiPost({ action:'removeEnum', field, value: target });
-    const schemaResp = await apiGet({ route:'schema' });
-    S.enums = schemaResp.enums || {};
-    loadEnumEditor(field);
-    populateNewForm();
-    toast('Opção removida.', 'ok');
-  } catch(e) {
-    toast('❌ ' + e.message, 'err');
-  }
+function removeEnum(field, i) {
+  if (!S.enums[field]) return;
+  S.enums[field].splice(i, 1);
+  loadEnumEditor(field);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1750,7 +1630,6 @@ function filterCands(list, includeInactive=false) {
   if (S.filter.status) r = r.filter(c => c['STATUS PIPELINE'] === S.filter.status);
   if (S.filter.perfil) r = r.filter(c => c['Perfil'] === S.filter.perfil);
   if (S.filter.alemao) r = r.filter(c => c['Nível de alemão'] === S.filter.alemao);
-  if (S.filter.profissao) r = r.filter(c => c['Profissão principal'] === S.filter.profissao);
   if (S.filter.q) {
     const q = S.filter.q.toLowerCase();
     r = r.filter(c => (c['Nome completo']||'').toLowerCase().includes(q) ||
