@@ -266,6 +266,7 @@ a{color:inherit;text-decoration:none}
 .filter-chip.active{border-color:var(--accent);color:var(--accent2);background:var(--accent-bg)}
 .filter-select{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--txt2);cursor:pointer}
 .filter-select option{background:var(--bg2)}
+.field-select-wrap{display:flex;gap:8px;align-items:center}.field-select-wrap .field-select{flex:1}.field-select-add{min-width:38px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--txt2);cursor:pointer;font-size:18px;line-height:1}.field-select-add:hover{border-color:var(--accent);color:var(--txt1)}
 
 /* Pagination */
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 0 0}
@@ -442,10 +443,10 @@ a{color:inherit;text-decoration:none}
         <div class="field-group"><label class="field-lbl">Telefone</label><input class="field-input" id="n-tel" placeholder="+55 11 99999-9999"></div>
         <div class="field-group"><label class="field-lbl">País de origem</label><input class="field-input" id="n-pais" placeholder="Brasil" value="BRASIL"></div>
         <div class="field-group"><label class="field-lbl">Cidade atual</label><input class="field-input" id="n-cidade" placeholder="São Paulo - SP"></div>
-        <div class="field-group"><label class="field-lbl">Profissão</label><input class="field-input" id="n-prof" placeholder="Enfermeiro(a)"></div>
-        <div class="field-group"><label class="field-lbl">Área profissional</label><input class="field-input" id="n-area" placeholder="Enfermagem hospitalar"></div>
-        <div class="field-group"><label class="field-lbl">Nível de alemão</label><select class="field-select" id="n-alemao"><option value="">Selecionar</option></select></div>
-        <div class="field-group"><label class="field-lbl">Status inicial</label><select class="field-select" id="n-status"><option value="">Selecionar</option></select></div>
+        <div class="field-group"><label class="field-lbl">Profissão</label><div class="field-select-wrap"><select class="field-select" id="n-prof"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Profissão principal', this, 'n-prof')" title="Adicionar nova opção">+</button></div></div>
+        <div class="field-group"><label class="field-lbl">Área profissional</label><div class="field-select-wrap"><select class="field-select" id="n-area"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Área profissional', this, 'n-area')" title="Adicionar nova opção">+</button></div></div>
+        <div class="field-group"><label class="field-lbl">Nível de alemão</label><div class="field-select-wrap"><select class="field-select" id="n-alemao"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Nível de alemão', this, 'n-alemao')" title="Adicionar nova opção">+</button></div></div>
+        <div class="field-group"><label class="field-lbl">Status inicial</label><div class="field-select-wrap"><select class="field-select" id="n-status"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('STATUS PIPELINE', this, 'n-status')" title="Adicionar nova opção">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Referência / Origem</label><input class="field-input" id="n-origem" placeholder="Instagram, Indicação..."></div>
         <div class="field-group"><label class="field-lbl">Responsável</label><input class="field-input" id="n-resp" placeholder="Nome do responsável"></div>
         <div class="field-group fg-full"><label class="field-lbl">Observação inicial</label><textarea class="field-textarea" id="n-obs" placeholder="Observações..." style="min-height:50px"></textarea></div>
@@ -585,7 +586,7 @@ const S = {
   currentCand: null,
   pendingEdits: {},
   page: 1, pageSize: 80,
-  filter: { status:'', q:'', perfil:'', alemao:'' },
+  filter: { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'' },
   syncTimer: null,
   lastSync: null,
 };
@@ -682,7 +683,7 @@ async function forceSync() {
 
 function updateBadges() {
   const tot = S.candidates.length;
-  const act = S.candidates.filter(c => c['Ativo'] === 'SIM' && c['STATUS PIPELINE'] !== 'Inativo / Arquivado').length;
+  const act = S.candidates.filter(c => isYes(fv(c,'Ativo')) && fv(c,'STATUS PIPELINE') !== 'Inativo / Arquivado').length;
   document.getElementById('nb-total').textContent   = tot;
   document.getElementById('nb-ativos').textContent  = act;
   document.getElementById('nb-cands').textContent   = tot;
@@ -710,8 +711,7 @@ function nav(view) {
   document.getElementById('tb-title').textContent = titles[view] || view;
   const showSearch = ['candidates','kanban','triagem','entrevistas','analise','documentacao','employer','inativos'].includes(view);
   document.getElementById('search-wrap').style.display = showSearch ? 'flex' : 'none';
-  document.getElementById('global-search').value = '';
-  S.filter.q = '';
+  clearFilters();
   renderView();
 }
 
@@ -744,16 +744,17 @@ function renderDashboard(el) {
   const s = d.summary || {};
   const charts = d.charts || {};
   const cands = S.candidates;
-  const ativos = cands.filter(c => c['Ativo'] === 'SIM' && c['STATUS PIPELINE'] !== 'Inativo / Arquivado');
+  const ativos = cands.filter(c => isYes(fv(c,'Ativo')) && fv(c,'STATUS PIPELINE') !== 'Inativo / Arquivado');
 
   // Extra metrics from local data
-  const b2plus   = ativos.filter(c => ['B2','B2+','C1','C2'].includes(c['Nível de alemão'])).length;
-  const semAlemao = ativos.filter(c => !c['Nível de alemão'] || c['Nível de alemão'] === 'Nenhum').length;
-  const triagem   = ativos.filter(c => c['STATUS PIPELINE'] === 'Triagem').length;
-  const entrevista= ativos.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(c['STATUS PIPELINE'])).length;
-  const docPend   = ativos.filter(c => c['Documentação completa'] !== 'SIM').length;
-  const prontos   = ativos.filter(c => c['STATUS PIPELINE'] === 'Aprovado / Pronto').length;
-  const employer  = ativos.filter(c => c['STATUS PIPELINE'] === 'Employer / Matching').length;
+  const b2plus   = ativos.filter(c => ['B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length;
+  const semAlemao = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a || a==='Nenhum'; }).length;
+  const triagem   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Triagem').length;
+  const entrevista= ativos.filter(c => ['Entrevista pessoal','Entrevista avaliação'].includes(fv(c,'STATUS PIPELINE'))).length;
+  const docPend   = ativos.filter(c => !isYes(fv(c,'Documentação completa','Doc. completa'))).length;
+  const prontos   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Aprovado / Pronto').length;
+  const employer  = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Employer / Matching').length;
+  const comEmpregador = ativos.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim()).length;
 
   // Metrics row 1
   const kpis1 = [
@@ -774,6 +775,7 @@ function renderDashboard(el) {
     { label:'Elegível Employer',    value:s.elegivelEmp||0,       sub:'marcados como elegíveis',  cls:'mc-teal' },
     { label:'Sem Alemão',           value:semAlemao,              sub:'precisam iniciar curso',   cls:'mc-red' },
     { label:'Inativos',             value:s.inativos||0,          sub:'arquivados/desistentes',   cls:'mc-orange' },
+    { label:'Com Empregador',       value:comEmpregador,          sub:'empresa vinculada',        cls:'mc-blue' },
     { label:'Alta Prioridade',      value:ativos.filter(c=>c['Prioridade comercial']==='Alta').length, sub:'prioridade=Alta', cls:'mc-yellow' },
   ];
 
@@ -813,7 +815,7 @@ function renderDashboard(el) {
     </div>`).join('');
 
   // Alemão chart
-  const byAlemao = charts.byAlemao || groupCount(ativos, c=>c['Nível de alemão']||'Nenhum');
+  const byAlemao = charts.byAlemao || groupCount(ativos, c=>fv(c,'Nível de alemão','Nível alemão')||'Nenhum');
   const maxA = Math.max(...byAlemao.map(x=>x[1]),1);
   const alemaoHtml = byAlemao.map(([k,v]) => `
     <div class="bar-row narrow">
@@ -823,7 +825,7 @@ function renderDashboard(el) {
     </div>`).join('');
 
   // Profissão
-  const byProf = groupCount(ativos, c=>c['Profissão principal']||'N/A').slice(0,8);
+  const byProf = (charts.byProfissao || groupCount(ativos, c=>fv(c,'Profissão principal','Profissão')||'N/A')).slice(0,8);
   const maxPr = Math.max(...byProf.map(x=>x[1]),1);
   const profHtml = byProf.map(([k,v]) => `
     <div class="bar-row wide">
@@ -832,8 +834,18 @@ function renderDashboard(el) {
       <div class="bar-val">${v}</div>
     </div>`).join('');
 
+  // Empresa / Empregador
+  const byEmp = groupCount(ativos.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim()), c=>fv(c,'Hospital alvo','Empresa / Empregador')||'N/A').slice(0,8);
+  const maxEmp = Math.max(...byEmp.map(x=>x[1]),1);
+  const empHtml = byEmp.map(([k,v]) => `
+    <div class="bar-row wide">
+      <div class="bar-lbl">${k}</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${(v/maxEmp*100).toFixed(0)}%;background:var(--green)"></div></div>
+      <div class="bar-val">${v}</div>
+    </div>`).join('');
+
   // Cidade
-  const byCid = groupCount(ativos, c=>c['Cidade atual']||'N/A').slice(0,8);
+  const byCid = (charts.byCidade || groupCount(ativos, c=>fv(c,'Cidade atual')||'N/A')).slice(0,8);
   const maxCid = Math.max(...byCid.map(x=>x[1]),1);
   const cidHtml = byCid.map(([k,v]) => `
     <div class="bar-row wide">
@@ -843,7 +855,7 @@ function renderDashboard(el) {
     </div>`).join('');
 
   // Avaliador / Recrutador
-  const byAv = groupCount(cands, c=>c['Avaliador']||'N/A').slice(0,8);
+  const byAv = groupCount(cands, c=>fv(c,'Avaliador','Responsável interno')||'N/A').slice(0,8);
   const maxAv = Math.max(...byAv.map(x=>x[1]),1);
   const avHtml = byAv.map(([k,v]) => `
     <div class="bar-row narrow">
@@ -895,10 +907,14 @@ function renderDashboard(el) {
       </div>
     </div>
 
-    <div class="charts-row cols-2">
+    <div class="charts-row cols-3">
       <div class="chart-card">
         <div class="chart-hdr"><div class="chart-title">💼 Profissões (Top 8)</div></div>
         <div class="bar-list">${profHtml||'—'}</div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hdr"><div class="chart-title">🏥 Empresas / Empregadores vinculados</div></div>
+        <div class="bar-list">${empHtml||'<p style=\"color:var(--txt3);font-size:12px\">Nenhum vínculo ainda</p>'}</div>
       </div>
       <div class="chart-card">
         <div class="chart-hdr"><div class="chart-title">📍 Cidades de Origem (Top 8)</div></div>
@@ -979,6 +995,8 @@ function renderTable(el, filterStatus) {
   const statusOpts = ['','Triagem','Entrevista pessoal','Entrevista avaliação','Análise RH','Documentação','Jurídico','Employer / Matching','Aprovado / Pronto','Contratado'];
   const alemaoOpts = ['','Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
   const perfilOpts = ['','Candidato forte','Candidato bom','Candidato mediano','Candidato fraco','Candidato intermediário'];
+  const profissaoOpts = [''].concat([...new Set((S.enums['Profissão principal'] || S.candidates.map(c=>fv(c,'Profissão principal','Profissão'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
+  const empregadorOpts = [''].concat([...new Set((S.enums['Hospital alvo'] || S.candidates.map(c=>fv(c,'Hospital alvo','Empresa / Empregador'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
 
   const filterBar = `
     <div class="filters-bar">
@@ -993,6 +1011,14 @@ function renderTable(el, filterStatus) {
       <select class="filter-select" onchange="setFilter('perfil',this.value)">
         ${perfilOpts.map(p => `<option value="${p}" ${S.filter.perfil===p?'selected':''}>${p||'Perfil (todos)'}</option>`).join('')}
       </select>
+      <select class="filter-select" onchange="setFilter('profissao',this.value)">
+        ${profissaoOpts.map(p => `<option value="${esc(p)}" ${S.filter.profissao===p?'selected':''}>${p||'Profissão (todas)'}</option>`).join('')}
+      </select>
+      <select class="filter-select" onchange="setFilter('empregador',this.value)">
+        <option value="" ${S.filter.empregador===''?'selected':''}>Empresa / empregador (todos)</option>
+        <option value="__filled__" ${S.filter.empregador==='__filled__'?'selected':''}>Com empresa vinculada</option>
+        ${empregadorOpts.filter(Boolean).map(p => `<option value="${esc(p)}" ${S.filter.empregador===p?'selected':''}>${p}</option>`).join('')}
+      </select>
     </div>`;
 
   const rows = paged.map(c => {
@@ -1000,16 +1026,16 @@ function renderTable(el, filterStatus) {
     const sc  = STATUS_BADGE[st] || 'b-inativo';
     const pf  = c['Perfil'] || '';
     const pfc = PERFIL_BADGE[pf] || '';
-    const al  = c['Nível de alemão'] || '';
+    const al  = fv(c,'Nível de alemão','Nível alemão') || '';
     const alc = ALEMAO_COLORS[al] || 'var(--txt3)';
     return `<tr onclick="openCand('${esc(c.ID)}')">
       <td class="td-name">${esc(c['Nome completo']||'—')}</td>
       <td>${st ? `<span class="badge ${sc}">${esc(st)}</span>` : '—'}</td>
       <td>${pf ? `<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>` : '—'}</td>
       <td>${al ? `<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>` : '—'}</td>
-      <td>${esc(c['Profissão principal']||'—')}</td>
-      <td>${esc(c['Cidade atual']||'—')}</td>
-      <td>${esc(c['Avaliador']||'—')}</td>
+      <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
+      <td>${esc(fv(c,'Cidade atual')||'—')}</td>
+      <td>${esc(fv(c,'Avaliador','Responsável interno')||'—')}</td>
       <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
       <td class="td-id">${esc(c.ID||'—')}</td>
     </tr>`;
@@ -1040,7 +1066,7 @@ function renderTable(el, filterStatus) {
 
 function renderInativo(el) {
   S.filter.status = '';
-  const list = S.candidates.filter(c => c['Ativo'] === 'NÃO' || c['STATUS PIPELINE'] === 'Inativo / Arquivado');
+  const list = S.candidates.filter(c => !isYes(fv(c,'Ativo')) || fv(c,'STATUS PIPELINE') === 'Inativo / Arquivado');
   const rows = list.map(c => `
     <tr onclick="openCand('${esc(c.ID)}')">
       <td class="td-name">${esc(c['Nome completo']||'—')}</td>
@@ -1049,7 +1075,7 @@ function renderInativo(el) {
       <td>${esc(c['Etapa de saída']||'—')}</td>
       <td style="font-size:11px;color:var(--txt3)">${esc(c['Data inativação']||'—')}</td>
       <td>${c['Reativável']==='SIM'?'<span style="color:var(--green);font-size:12px;font-weight:600">Sim</span>':'<span style="color:var(--txt3);font-size:12px">Não</span>'}</td>
-      <td>${esc(c['Nível de alemão']||'—')}</td>
+      <td>${esc(fv(c,'Nível de alemão','Nível alemão')||'—')}</td>
       <td>${esc(c['Perfil']||'—')}</td>
     </tr>`).join('');
 
@@ -1143,9 +1169,12 @@ function buildPanel(tabId, c) {
         `<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('');
       return `<div class="${cls}">
         <label class="field-lbl">${label}</label>
-        <select class="field-select" data-field="${esc(field)}" onchange="onEdit(this)">
-          <option value="">— Selecionar —</option>${options}
-        </select>
+        <div class="field-select-wrap">
+          <select class="field-select" data-field="${esc(field)}" onchange="onEdit(this)">
+            <option value="">— Selecionar —</option>${options}
+          </select>
+          <button type="button" class="field-select-add" onclick="quickAddEnum('${esc(field)}', this)" title="Adicionar nova opção">+</button>
+        </div>
       </div>`;
     }
     if (type === 'textarea') {
@@ -1301,7 +1330,7 @@ function buildPanel(tabId, c) {
         <div class="section-hdr">Elegibilidade & Matching</div>
         <div class="field-grid">
           ${fld('Elegível para employer','Elegível para employer?','select')}
-          ${fld('Hospital alvo','Hospital alvo')}
+          ${fld('Hospital alvo','Empresa / Empregador','select')}
           ${fld('Status employer','Status employer','select')}
           ${fld('Data envio employer','Data envio employer')}
           <div class="field-group fg-full"><label class="field-lbl">Retorno employer</label><textarea class="field-textarea" data-field="Retorno employer" oninput="onEdit(this)">${esc(c['Retorno employer']||'')}</textarea></div>
@@ -1380,13 +1409,16 @@ function closeCandOverlay(e) { if(e.target===document.getElementById('cand-overl
 // NEW CANDIDATE
 // ══════════════════════════════════════════════════════════════
 function populateNewForm() {
-  const alemaoSel = document.getElementById('n-alemao');
-  const statusSel = document.getElementById('n-status');
-  if (!alemaoSel || !statusSel) return;
-  alemaoSel.innerHTML = '<option value="">Selecionar</option>' +
-    ['Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'].map(o=>`<option>${o}</option>`).join('');
-  statusSel.innerHTML = '<option value="">Selecionar</option>' +
-    PIPELINE_STAGES.map(o=>`<option>${o}</option>`).join('');
+  const fillSelect = (id, field, fallback=[]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const opts = (S.enums[field] && S.enums[field].length ? S.enums[field] : fallback).filter(Boolean);
+    el.innerHTML = '<option value="">Selecionar</option>' + opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  };
+  fillSelect('n-prof','Profissão principal');
+  fillSelect('n-area','Área profissional');
+  fillSelect('n-alemao','Nível de alemão',['Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2']);
+  fillSelect('n-status','STATUS PIPELINE', PIPELINE_STAGES);
 }
 
 function openNewCandidate() { document.getElementById('new-overlay').classList.add('open'); }
@@ -1445,145 +1477,7 @@ function renderSettings(el) {
       ${u.user !== 'admin' ? `<button class="btn btn-xs btn-ghost" onclick="deleteUser(${i})">Remover</button>` : '<span style="font-size:11px;color:var(--txt3)">protegido</span>'}
     </div>`).join('');
 
-  // Enum editor - STATUS PIPELINE
-  const enumEditorHtml = buildEnumEditor('STATUS PIPELINE');
-
-  el.innerHTML = `
-    <div class="settings-grid">
-      <div class="settings-nav">
-        <div class="settings-nav-item active" onclick="switchSettings('s-users',this)">👥 Usuários</div>
-        <div class="settings-nav-item" onclick="switchSettings('s-enums',this)">📋 Listas & Status</div>
-        <div class="settings-nav-item" onclick="switchSettings('s-api',this)">🔌 API & Conexão</div>
-        <div class="settings-nav-item" onclick="switchSettings('s-about',this)">ℹ️ Sobre</div>
-      </div>
-      <div>
-        <!-- USERS -->
-        <div class="settings-panel active" id="s-users">
-          <div class="settings-card">
-            <h3>Gerenciar Colaboradores</h3>
-            <p>Crie usuários para que sua equipe acesse o CRM com senha própria.</p>
-            <div id="user-list">${userRows}</div>
-            <div style="margin-top:14px">
-              <button class="btn btn-primary" onclick="openUserModal()">+ Novo Colaborador</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- ENUMS -->
-        <div class="settings-panel" id="s-enums">
-          <div class="settings-card">
-            <h3>Listas de Valores (Dropdowns)</h3>
-            <p>Edite as opções disponíveis nos dropdowns de cada campo. As alterações são salvas localmente.</p>
-            <div style="margin-bottom:12px">
-              <label class="field-lbl">Campo a editar</label>
-              <select class="field-select" style="max-width:280px;margin-top:4px" onchange="loadEnumEditor(this.value)" id="enum-field-sel">
-                ${Object.keys(S.enums).map(k=>`<option value="${k}" ${k==='STATUS PIPELINE'?'selected':''}>${k}</option>`).join('')}
-              </select>
-            </div>
-            <div id="enum-editor">${enumEditorHtml}</div>
-          </div>
-        </div>
-
-        <!-- API -->
-        <div class="settings-panel" id="s-api">
-          <div class="settings-card">
-            <h3>Conexão com Google Sheets</h3>
-            <p>As credenciais abaixo estão configuradas neste sistema.</p>
-            <div class="field-group" style="margin-bottom:12px">
-              <label class="field-lbl">URL da API</label>
-              <input class="field-input" value="${API_URL}" readonly style="font-family:var(--mono);font-size:11px;cursor:text">
-            </div>
-            <div class="field-group">
-              <label class="field-lbl">API Key</label>
-              <input class="field-input" type="password" value="${API_KEY}" readonly id="api-key-field">
-            </div>
-            <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="toggleApiKey()">Mostrar / Ocultar key</button>
-            <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border)">
-              <div style="font-size:12px;color:var(--txt3)">Sincronização automática a cada 90s</div>
-              <div style="font-size:12px;color:var(--txt2);margin-top:4px">Última sync: ${S.lastSync ? S.lastSync.toLocaleString('pt-BR') : 'nunca'}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ABOUT -->
-        <div class="settings-panel" id="s-about">
-          <div class="settings-card">
-            <h3>T4 Operations CRM v5.1</h3>
-            <p>Sistema operacional para recrutamento internacional — Talents 4.</p>
-            <div style="font-size:12.5px;color:var(--txt2);line-height:1.8">
-              <div>🗂 Backend: Google Apps Script + Google Sheets</div>
-              <div>🔐 Autenticação: Local (usuário + senha)</div>
-              <div>🔄 Sync automático: a cada 90 segundos</div>
-              <div>📊 Candidatos carregados: ${S.candidates.length}</div>
-              <div style="margin-top:12px;font-size:11px;color:var(--txt3)">
-                Credenciais e usuários ficam no localStorage/sessionStorage do navegador.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
-
-function switchSettings(panelId, el) {
-  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(panelId).classList.add('active');
-  el.classList.add('active');
-}
-
-function toggleApiKey() {
-  const f = document.getElementById('api-key-field');
-  f.type = f.type === 'password' ? 'text' : 'password';
-}
-
-// Users
-function openUserModal(editIdx) {
-  document.getElementById('um-title').textContent = editIdx !== undefined ? 'Editar Usuário' : 'Novo Colaborador';
-  document.getElementById('um-nome').value = '';
-  document.getElementById('um-user').value = '';
-  document.getElementById('um-pass').value = '';
-  document.getElementById('um-pass2').value = '';
-  document.getElementById('um-err').style.display = 'none';
-  document.getElementById('user-overlay').classList.add('open');
-}
-function closeUserModal() { document.getElementById('user-overlay').classList.remove('open'); }
-function closeUserOverlay(e) { if(e.target===document.getElementById('user-overlay')) closeUserModal(); }
-
-function saveUser() {
-  const nome = document.getElementById('um-nome').value.trim();
-  const user = document.getElementById('um-user').value.trim();
-  const pass = document.getElementById('um-pass').value;
-  const pass2= document.getElementById('um-pass2').value;
-  const role = document.getElementById('um-role').value;
-  const err  = document.getElementById('um-err');
-  err.style.display='none';
-
-  if (!nome || !user || !pass) { err.textContent='Preencha todos os campos obrigatórios.'; err.style.display='block'; return; }
-  if (pass !== pass2) { err.textContent='As senhas não coincidem.'; err.style.display='block'; return; }
-  if (pass.length < 6) { err.textContent='A senha deve ter ao menos 6 caracteres.'; err.style.display='block'; return; }
-
-  const users = getUsers();
-  if (users.find(u => u.user === user)) { err.textContent='Este usuário já existe.'; err.style.display='block'; return; }
-
-  const COLORS = ['#5b6af0','#c084fc','#2dd4bf','#f5c84a','#ff8c42','#38bdf8','#1de99b','#ff4d6a'];
-  users.push({ user, pass, nome, role, color: COLORS[users.length % COLORS.length] });
-  saveUsers(users);
-  closeUserModal();
-  toast('✅ Usuário criado: ' + nome, 'ok');
-  renderView();
-}
-
-function deleteUser(i) {
-  if (!confirm('Remover este usuário?')) return;
-  const users = getUsers();
-  users.splice(i, 1);
-  saveUsers(users);
-  toast('Usuário removido.', 'ok');
-  renderView();
-}
-
-// Enum editor
+  // Enum editor
 function buildEnumEditor(field) {
   const opts = S.enums[field] || [];
   const tags = opts.map((o,i) => `
@@ -1604,21 +1498,71 @@ function loadEnumEditor(field) {
   document.getElementById('enum-editor').innerHTML = buildEnumEditor(field);
 }
 
-function addEnum(field) {
+async function addEnum(field, presetValue='') {
   const input = document.getElementById('enum-new-val');
-  const val   = input.value.trim();
+  const val = (presetValue || (input ? input.value : '') || '').trim();
   if (!val) return;
-  if (!S.enums[field]) S.enums[field] = [];
-  if (!S.enums[field].includes(val)) { S.enums[field].push(val); }
-  input.value = '';
-  loadEnumEditor(field);
-  toast('✅ Opção adicionada.', 'ok');
+  if ((S.enums[field] || []).includes(val)) { if (input) input.value=''; toast('Essa opção já existe.', 'warn'); return; }
+  try {
+    const resp = await apiPost({ action:'upsertEnum', field, value:val });
+    S.enums = resp.enums || S.enums;
+    if (input) input.value = '';
+    const sel = document.getElementById('enum-field-sel');
+    if (sel) loadEnumEditor(sel.value || field);
+    populateNewForm();
+    if (S.currentCand) openCand(S.currentCand.ID);
+    renderView();
+    toast('✅ Opção adicionada e salva no banco.', 'ok');
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
 }
 
-function removeEnum(field, i) {
+async function removeEnum(field, i) {
   if (!S.enums[field]) return;
-  S.enums[field].splice(i, 1);
-  loadEnumEditor(field);
+  const value = S.enums[field][i];
+  if (!value) return;
+  if (!confirm(`Remover a opção "${value}" de "${field}"?`)) return;
+  try {
+    const resp = await apiPost({ action:'removeEnum', field, value });
+    S.enums = resp.enums || S.enums;
+    const sel = document.getElementById('enum-field-sel');
+    if (sel) loadEnumEditor(sel.value || field);
+    populateNewForm();
+    if (S.currentCand) openCand(S.currentCand.ID);
+    renderView();
+    toast('✅ Opção removida do banco.', 'ok');
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
+}
+
+async function quickAddEnum(field, btn, targetSelectId='') {
+  const label = field;
+  const value = prompt(`Nova opção para ${label}:`);
+  if (!value || !value.trim()) return;
+  const clean = value.trim();
+  try {
+    const resp = await apiPost({ action:'upsertEnum', field, value:clean });
+    S.enums = resp.enums || S.enums;
+    if (targetSelectId) {
+      populateNewForm();
+      const sel = document.getElementById(targetSelectId);
+      if (sel) sel.value = clean;
+    }
+    if (S.currentCand) {
+      openCand(S.currentCand.ID);
+      setTimeout(() => {
+        const modalSel = document.querySelector(`[data-field="${CSS.escape(field)}"]`);
+        if (modalSel) modalSel.value = clean;
+        if (modalSel) onEdit(modalSel);
+      }, 30);
+    }
+    renderView();
+    toast('✅ Nova opção salva no banco e disponível nos filtros/dashboard.', 'ok');
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1626,16 +1570,20 @@ function removeEnum(field, i) {
 // ══════════════════════════════════════════════════════════════
 function filterCands(list, includeInactive=false) {
   let r = list;
-  if (!includeInactive) r = r.filter(c => c['Ativo'] !== 'NÃO' && c['STATUS PIPELINE'] !== 'Inativo / Arquivado');
-  if (S.filter.status) r = r.filter(c => c['STATUS PIPELINE'] === S.filter.status);
-  if (S.filter.perfil) r = r.filter(c => c['Perfil'] === S.filter.perfil);
-  if (S.filter.alemao) r = r.filter(c => c['Nível de alemão'] === S.filter.alemao);
+  if (!includeInactive) r = r.filter(c => isYes(fv(c,'Ativo')) && fv(c,'STATUS PIPELINE') !== 'Inativo / Arquivado');
+  if (S.filter.status) r = r.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
+  if (S.filter.perfil) r = r.filter(c => fv(c,'Perfil') === S.filter.perfil);
+  if (S.filter.profissao) r = r.filter(c => fv(c,'Profissão principal','Profissão') === S.filter.profissao);
+  if (S.filter.empregador === '__filled__') r = r.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim());
+  else if (S.filter.empregador) r = r.filter(c => fv(c,'Hospital alvo','Empresa / Empregador') === S.filter.empregador);
+  if (S.filter.alemao) r = r.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
   if (S.filter.q) {
     const q = S.filter.q.toLowerCase();
-    r = r.filter(c => (c['Nome completo']||'').toLowerCase().includes(q) ||
-                      (c['Profissão principal']||'').toLowerCase().includes(q) ||
-                      (c['E-mail']||'').toLowerCase().includes(q) ||
-                      (c['Cidade atual']||'').toLowerCase().includes(q) ||
+    r = r.filter(c => (fv(c,'Nome completo')||'').toLowerCase().includes(q) ||
+                      (fv(c,'Profissão principal','Profissão')||'').toLowerCase().includes(q) ||
+                      (fv(c,'E-mail')||'').toLowerCase().includes(q) ||
+                      (fv(c,'Cidade atual')||'').toLowerCase().includes(q) ||
+                      (fv(c,'Hospital alvo','Empresa / Empregador')||'').toLowerCase().includes(q) ||
                       (c.ID||'').toLowerCase().includes(q));
   }
   return r;
@@ -1667,6 +1615,22 @@ function hex2rgb(hex) {
 
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fv(obj, ...keys) {
+  for (const k of keys) {
+    const v = obj && obj[k];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+  }
+  return '';
+}
+function isYes(v) {
+  return ['SIM','TRUE','VERDADEIRO','1','YES','Y'].includes(String(v||'').trim().toUpperCase());
+}
+function clearFilters() {
+  S.filter = { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'' };
+  const gs = document.getElementById('global-search');
+  if (gs) gs.value = '';
 }
 
 // ══════════════════════════════════════════════════════════════
