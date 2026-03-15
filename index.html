@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>T4 Operations — CRM Enterprise</title>
+<title>T4 Operations — CRM Enterprise v6.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -609,15 +609,14 @@ function refreshSelectOptions(selectEl, field, selectedValue) {
 // ══════════════════════════════════════════════════════════════
 const DEFAULT_USERS = [
   { user:'admin', pass:'t4admin2026', nome:'Administrador', role:'admin', color:'#5b6af0' },
-  { user:'sara', pass:'t4sara2026', nome:'Sara', role:'recrutador', color:'#c084fc' },
-  { user:'carol', pass:'t4carol2026', nome:'Carol', role:'recrutador', color:'#2dd4bf' },
 ];
 
 function getUsers() {
-  try { return JSON.parse(localStorage.getItem('t4_users') || 'null') || DEFAULT_USERS; }
-  catch { return DEFAULT_USERS; }
+  return Array.isArray(S.users) && S.users.length ? S.users : DEFAULT_USERS;
 }
-function saveUsers(u) { localStorage.setItem('t4_users', JSON.stringify(u)); }
+function saveUsers(u) {
+  S.users = Array.isArray(u) ? u : [];
+}
 function getSession() {
   try { return JSON.parse(sessionStorage.getItem('t4_session') || 'null'); }
   catch { return null; }
@@ -661,6 +660,7 @@ const S = {
   enums: {},
   dashboard: null,
   schema: [],
+  users: [],
   loading: false,
   currentCand: null,
   pendingEdits: {},
@@ -717,6 +717,7 @@ async function loadAll() {
     S.dashboard  = dashResp;
     S.schema     = schemaResp.schema || [];
     S.enums      = schemaResp.enums  || {};
+    S.users      = Array.isArray(schemaResp.users) ? schemaResp.users : [];
     S.lastSync   = new Date();
     updateBadges();
     populateNewForm();
@@ -1565,7 +1566,7 @@ function renderSettings(el) {
         <div class="settings-panel" id="s-enums">
           <div class="settings-card">
             <h3>Listas de Valores (Dropdowns)</h3>
-            <p>Edite as opções disponíveis nos dropdowns. Nesta versão do frontend, novas opções ficam salvas neste navegador e também passam a aparecer quando usadas em candidatos.</p>
+            <p>Edite as opções disponíveis nos dropdowns. As novas opções são gravadas no backend e ficam disponíveis para todos os usuários.</p>
             <div style="margin-bottom:12px">
               <label class="field-lbl">Campo a editar</label>
               <select class="field-select" style="max-width:280px;margin-top:4px" onchange="loadEnumEditor(this.value)" id="enum-field-sel">
@@ -1600,7 +1601,7 @@ function renderSettings(el) {
         <!-- ABOUT -->
         <div class="settings-panel" id="s-about">
           <div class="settings-card">
-            <h3>T4 Operations CRM v5.1</h3>
+            <h3>T4 Operations CRM v6.1</h3>
             <p>Sistema operacional para recrutamento internacional — Talents 4.</p>
             <div style="font-size:12.5px;color:var(--txt2);line-height:1.8">
               <div>🗂 Backend: Google Apps Script + Google Sheets</div>
@@ -1608,7 +1609,7 @@ function renderSettings(el) {
               <div>🔄 Sync automático: a cada 90 segundos</div>
               <div>📊 Candidatos carregados: ${S.candidates.length}</div>
               <div style="margin-top:12px;font-size:11px;color:var(--txt3)">
-                Credenciais e usuários ficam no localStorage/sessionStorage do navegador.
+                Usuários e listas principais estão centralizados no backend. A sessão continua no navegador.
               </div>
             </div>
           </div>
@@ -1642,7 +1643,7 @@ function openUserModal(editIdx) {
 function closeUserModal() { document.getElementById('user-overlay').classList.remove('open'); }
 function closeUserOverlay(e) { if(e.target===document.getElementById('user-overlay')) closeUserModal(); }
 
-function saveUser() {
+async function saveUser() {
   const nome = document.getElementById('um-nome').value.trim();
   const user = document.getElementById('um-user').value.trim();
   const pass = document.getElementById('um-pass').value;
@@ -1659,20 +1660,31 @@ function saveUser() {
   if (users.find(u => u.user === user)) { err.textContent='Este usuário já existe.'; err.style.display='block'; return; }
 
   const COLORS = ['#5b6af0','#c084fc','#2dd4bf','#f5c84a','#ff8c42','#38bdf8','#1de99b','#ff4d6a'];
-  users.push({ user, pass, nome, role, color: COLORS[users.length % COLORS.length] });
-  saveUsers(users);
-  closeUserModal();
-  toast('✅ Usuário criado: ' + nome, 'ok');
-  renderView();
+  try {
+    const resp = await apiPost({ action:'saveUser', user:{ user, pass, nome, role, color: COLORS[users.length % COLORS.length], ativo:'SIM' } });
+    S.users = resp.users || [];
+    closeUserModal();
+    toast('✅ Usuário criado: ' + nome, 'ok');
+    renderView();
+  } catch(e) {
+    err.textContent = e.message || 'Erro ao salvar usuário';
+    err.style.display = 'block';
+  }
 }
 
-function deleteUser(i) {
+async function deleteUser(i) {
   if (!confirm('Remover este usuário?')) return;
   const users = getUsers();
-  users.splice(i, 1);
-  saveUsers(users);
-  toast('Usuário removido.', 'ok');
-  renderView();
+  const target = users[i];
+  if (!target) return;
+  try {
+    const resp = await apiPost({ action:'deleteUser', userLogin: target.user });
+    S.users = resp.users || [];
+    toast('Usuário removido.', 'ok');
+    renderView();
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
 }
 
 // Enum editor
@@ -1696,28 +1708,37 @@ function loadEnumEditor(field) {
   document.getElementById('enum-editor').innerHTML = buildEnumEditor(field);
 }
 
-function addEnum(field) {
+async function addEnum(field) {
   const input = document.getElementById('enum-new-val');
   const val   = input.value.trim();
   if (!val) return;
-  const added = addLocalOption(field, val);
-  if (!added) return;
-  input.value = '';
-  loadEnumEditor(field);
-  populateNewForm();
-  toast('✅ Opção adicionada.', 'ok');
+  try {
+    await apiPost({ action:'upsertEnum', field, value: val });
+    const schemaResp = await apiGet({ route:'schema' });
+    S.enums = schemaResp.enums || {};
+    input.value = '';
+    loadEnumEditor(field);
+    populateNewForm();
+    toast('✅ Opção adicionada.', 'ok');
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
 }
 
-function removeEnum(field, i) {
-  const data = loadLocalEnums();
+async function removeEnum(field, i) {
   const opts = getEnumOptions(field);
   const target = opts[i];
   if (!target) return;
-  data[field] = (data[field] || []).filter(v => normalizeOption(v).toLowerCase() !== normalizeOption(target).toLowerCase());
-  saveLocalEnums(data);
-  S.enums[field] = (S.enums[field] || []).filter(v => normalizeOption(v).toLowerCase() !== normalizeOption(target).toLowerCase());
-  loadEnumEditor(field);
-  populateNewForm();
+  try {
+    await apiPost({ action:'removeEnum', field, value: target });
+    const schemaResp = await apiGet({ route:'schema' });
+    S.enums = schemaResp.enums || {};
+    loadEnumEditor(field);
+    populateNewForm();
+    toast('Opção removida.', 'ok');
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
