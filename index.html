@@ -350,7 +350,7 @@ a{color:inherit;text-decoration:none}
     </div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()" id="li-btn">Entrar</button>
     <div class="login-err" id="li-err">Usuário ou senha incorretos.</div>
-    <div class="login-footer">T4 Operations v5.1 · Acesso restrito</div>
+    <div class="login-footer">T4 Operations v6.5 · Login via backend</div>
   </div>
 </div>
 
@@ -529,16 +529,16 @@ const ALEMAO_COLORS = {
 // AUTH — Local user management
 // ══════════════════════════════════════════════════════════════
 const DEFAULT_USERS = [
-  { user:'admin', pass:'t4admin2026', nome:'Administrador', role:'admin', color:'#5b6af0' },
-  { user:'sara', pass:'t4sara2026', nome:'Sara', role:'recrutador', color:'#c084fc' },
-  { user:'carol', pass:'t4carol2026', nome:'Carol', role:'recrutador', color:'#2dd4bf' },
+  { user:'admin', pass:'t4admin2026', nome:'Administrador', role:'admin', color:'#5b6af0', ativo:'SIM' },
+  { user:'sara', pass:'t4sara2026', nome:'Sara', role:'recrutador', color:'#c084fc', ativo:'SIM' },
+  { user:'carol', pass:'t4carol2026', nome:'Carol', role:'recrutador', color:'#2dd4bf', ativo:'SIM' },
 ];
 
 function getUsers() {
-  try { return JSON.parse(localStorage.getItem('t4_users') || 'null') || DEFAULT_USERS; }
-  catch { return DEFAULT_USERS; }
+  if (Array.isArray(S.users) && S.users.length) return S.users;
+  return DEFAULT_USERS;
 }
-function saveUsers(u) { localStorage.setItem('t4_users', JSON.stringify(u)); }
+function saveUsers(_) { /* desativado: usuários agora devem vir do backend */ }
 function getSession() {
   try { return JSON.parse(sessionStorage.getItem('t4_session') || 'null'); }
   catch { return null; }
@@ -546,23 +546,47 @@ function getSession() {
 function setSession(u) { sessionStorage.setItem('t4_session', JSON.stringify(u)); }
 function clearSession() { sessionStorage.removeItem('t4_session'); }
 
-function doLogin() {
+async function fetchUsersForAuth() {
+  try {
+    const resp = await apiGet({ route:'users' });
+    const users = Array.isArray(resp.users) ? resp.users : [];
+    if (users.length) {
+      S.users = users;
+      return users;
+    }
+  } catch (e) {
+    console.warn('Falha ao carregar usuários do backend:', e);
+  }
+  S.users = DEFAULT_USERS;
+  return DEFAULT_USERS;
+}
+
+async function doLogin() {
   const user = document.getElementById('li-user').value.trim();
   const pass = document.getElementById('li-pass').value;
   const err  = document.getElementById('li-err');
   const btn  = document.getElementById('li-btn');
   err.style.display = 'none';
   if (!user || !pass) { err.textContent = 'Preencha usuário e senha.'; err.style.display='block'; return; }
-  const found = getUsers().find(u => u.user === user && u.pass === pass);
-  if (!found) { err.textContent = 'Usuário ou senha incorretos.'; err.style.display='block'; return; }
-  setSession(found);
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('user-av').textContent = found.nome[0].toUpperCase();
-  document.getElementById('user-av').style.background = found.color || 'var(--accent)';
-  document.getElementById('user-name').textContent = found.nome;
-  document.getElementById('user-role').textContent = found.role === 'admin' ? 'Administrador' : found.role === 'recrutador' ? 'Recrutador' : 'Visualizador';
-  initApp();
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  try {
+    const users = await fetchUsersForAuth();
+    const found = users.find(u => String(u.user||'').trim() === user && String(u.pass||'') === pass && String(u.ativo||'SIM').toUpperCase() !== 'NÃO');
+    if (!found) { err.textContent = 'Usuário ou senha incorretos.'; err.style.display='block'; return; }
+    setSession(found);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('user-av').textContent = (found.nome||found.user||'?')[0].toUpperCase();
+    document.getElementById('user-av').style.background = found.color || 'var(--accent)';
+    document.getElementById('user-name').textContent = found.nome || found.user;
+    document.getElementById('user-role').textContent = found.role === 'admin' ? 'Administrador' : found.role === 'recrutador' ? 'Recrutador' : 'Visualizador';
+    initApp();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
 }
 
 function doLogout() {
@@ -581,6 +605,7 @@ const S = {
   candidates: [],
   enums: {},
   dashboard: null,
+  users: [],
   schema: [],
   loading: false,
   currentCand: null,
